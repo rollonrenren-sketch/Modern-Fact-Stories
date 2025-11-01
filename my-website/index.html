@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
   <meta name="theme-color" content="#0f0f0f" />
   <title>Modern Fact Stories - Professional Streaming Platform</title>
   <link rel="icon" type="image/jpeg" href="logo.jpg" />
@@ -12,53 +15,59 @@
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link rel="dns-prefetch" href="//idolinflectiongentlemen.com">
 
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="application-name" content="Modern Fact Stories">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
-
   <style>
-    /* RESET */
+    /* ─────────── CSS RESET (light) ─────────── */
     *,*::before,*::after{box-sizing:border-box}
     html,body{margin:0;padding:0}
     img{max-width:100%;display:block}
     button{font:inherit}
-
     :root{
+      /* Base palette */
       --primary-bg:#ffffff; --secondary-bg:#f8f9fa; --card-bg:#ffffff;
       --accent-red:#e50914; --accent-blue:#0071eb; --accent-gold:#f5c518; --accent-green:#46d369;
       --text-primary:#1a1a1a; --text-secondary:#5a5a5a; --text-muted:#8c8c8c;
       --border-color:#e0e0e0; --hover-bg:#f5f5f5;
       --shadow-sm:0 2px 8px rgba(0,0,0,.08); --shadow-md:0 4px 16px rgba(0,0,0,.12); --shadow-lg:0 8px 32px rgba(0,0,0,.16);
+
+      /* Layout scales */
       --container-pad: clamp(16px, 3vw, 40px);
       --section-gap: clamp(32px, 5vw, 50px);
       --radius-lg: 20px;
+
+      /* Responsive movie card min width (overridden per breakpoint) */
       --card-min: 200px;
+
+      /* Typography */
       --h1-size: clamp(28px, 4.5vw, 64px);
       --h2-size: clamp(20px, 2.2vw, 28px);
       --text-size: clamp(14px, 1.5vw, 16px);
+
+      /* iOS safe area */
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --sticky-resume-h: 56px;
     }
+
     [data-theme="dark"]{
       --primary-bg:#0f0f0f; --secondary-bg:#1a1a1a; --card-bg:#222222;
       --text-primary:#ffffff; --text-secondary:#b3b3b3; --text-muted:#808080; --border-color:#333333; --hover-bg:#2a2a2a;
       --shadow-sm:0 2px 8px rgba(0,0,0,.4); --shadow-md:0 4px 16px rgba(0,0,0,.5); --shadow-lg:0 8px 32px rgba(0,0,0,.6);
     }
+
     body{
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;
       font-size:var(--text-size);
       background:var(--primary-bg);
       color:var(--text-primary);
       overflow-x:hidden;
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
+
+    /* Scrollbar */
     ::-webkit-scrollbar{width:10px;height:10px}
     ::-webkit-scrollbar-track{background:var(--secondary-bg)}
     ::-webkit-scrollbar-thumb{background:var(--accent-red);border-radius:10px}
 
-    /* LOADER */
+    /* Loading (improved) */
     .loading-screen{
       position:fixed;inset:0;background:radial-gradient(1200px 1200px at 50% -10%, rgba(229,9,20,.25), transparent 60%),linear-gradient(135deg,#0f0f0f 0%,#1a1a1a 100%);
       display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;
@@ -76,15 +85,24 @@
     @keyframes spin{to{transform:rotate(360deg)}}
 
     /* NAVBAR */
-    .navbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px var(--container-pad);background:var(--card-bg);border-bottom:1px solid var(--border-color);box-shadow:var(--shadow-sm);backdrop-filter:saturate(120%) blur(8px)}
+    .navbar{
+      position:sticky;top:0;z-index:100;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px var(--container-pad);
+      background:var(--card-bg); border-bottom:1px solid var(--border-color);
+      box-shadow:var(--shadow-sm);
+      backdrop-filter:saturate(120%) blur(8px);
+    }
     .navbar-left{display:flex;align-items:center;gap:18px}
     .logo{display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}
     .logo-img{width:40px;height:40px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px rgba(229,9,20,.3);transition:transform .3s}
     .logo-img:hover{transform:scale(1.06) rotate(3deg)}
     .logo-text{font-weight:800;background:linear-gradient(135deg,var(--accent-red),var(--accent-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
     .nav-links{display:flex;gap:14px}
     .nav-links a{color:var(--text-secondary);text-decoration:none;padding:8px 12px;border-radius:8px;transition:.25s;font-weight:600;white-space:nowrap}
     .nav-links a:hover,.nav-links a.active{background:var(--hover-bg);color:var(--text-primary)}
+
     .navbar-right{display:flex;align-items:center;gap:10px}
     .search-container{position:relative;display:flex;align-items:center}
     .search-bar{background:var(--secondary-bg);border:2px solid var(--border-color);color:var(--text-primary);padding:10px 40px 10px 14px;border-radius:999px;width:min(54vw,320px);transition:.25s}
@@ -96,7 +114,11 @@
     .theme-toggle:hover{transform:rotate(180deg)}
     .user-profile{background:linear-gradient(135deg,var(--accent-red),var(--accent-blue));color:#fff;font-weight:800}
 
-    .nav-toggle{display:none;background:var(--secondary-bg);border:2px solid var(--border-color);width:40px;height:40px;border-radius:10px;align-items:center;justify-content:center;cursor:pointer}
+    /* Hamburger */
+    .nav-toggle{
+      display:none;background:var(--secondary-bg);border:2px solid var(--border-color);
+      width:40px;height:40px;border-radius:10px;align-items:center;justify-content:center;cursor:pointer;
+    }
     .nav-toggle span{display:block;width:20px;height:2px;background:var(--text-primary);position:relative}
     .nav-toggle span::before,.nav-toggle span::after{content:"";position:absolute;left:0;width:20px;height:2px;background:var(--text-primary)}
     .nav-toggle span::before{top:-6px}.nav-toggle span::after{top:6px}
@@ -121,17 +143,23 @@
     .section{margin:var(--section-gap) var(--container-pad)}
     .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:14px}
     .section-title{font-size:var(--h2-size);font-weight:900}
-    .movie-grid{display:grid;gap:clamp(12px,2vw,24px);grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr))}
-    .skeleton{border-radius:14px;overflow:hidden;background:var(--card-bg);box-shadow:var(--shadow-sm)}
-    .skeleton .sk-poster{aspect-ratio:2/3;background:linear-gradient(90deg,#2a2a2a20,#2a2a2a40,#2a2a2a20);animation:shimmer 1.3s infinite}
-    .skeleton .sk-text{height:46px;padding:10px}
-    .skeleton .sk-bar{height:10px;border-radius:6px;background:linear-gradient(90deg,#2a2a2a20,#2a2a2a40,#2a2a2a20);animation:shimmer 1.3s infinite}
-    @keyframes shimmer {0%{background-position:-200px 0}100%{background-position:200px 0}}
+    .movie-grid{
+      display:grid;gap:clamp(12px,2vw,24px);
+      grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    }
 
-    /* Cards */
+    /* Skeleton card */
+    .skeleton{border-radius:14px;overflow:hidden;background:var(--card-bg);box-shadow:var(--shadow-sm)}
+    .skeleton .sk-poster{aspect-ratio:2/3;background:linear-gradient(90deg,#2a2a2a20, #2a2a2a40, #2a2a2a20);animation:shimmer 1.3s infinite}
+    .skeleton .sk-text{height:46px;padding:10px}
+    .skeleton .sk-bar{height:10px;border-radius:6px;background:linear-gradient(90deg,#2a2a2a20, #2a2a2a40, #2a2a2a20);animation:shimmer 1.3s infinite}
+    @keyframes shimmer {0%{background-position:-200px 0}100%{background-position:200px 0}}
+    @media (prefers-reduced-motion:reduce){.skeleton .sk-poster,.skeleton .sk-bar{animation:none}}
+
+    /* Card */
     .movie-card{position:relative;cursor:pointer;transition:transform .2s, box-shadow .2s;background:var(--card-bg);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm)}
     .movie-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
-    .poster-wrap{position:relative;width:100%;aspect-ratio:2/3;overflow:hidden;background:#111}
+    .poster-wrap{position:relative;width:100%;aspect-ratio: 2 / 3;overflow:hidden;background:#111}
     .poster-wrap img.movie-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
     .movie-info{padding:12px}
     .movie-title{font-size:15px;font-weight:800;margin-bottom:6px}
@@ -141,9 +169,6 @@
     .action-btn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.8);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;opacity:0;transition:opacity .2s}
     .movie-card:hover .action-btn{opacity:1}
     .action-btn:hover,.action-btn.active{background:var(--accent-red)}
-    .remind-btn{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.75);color:#fff;border:0;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;display:none}
-    .movie-card[data-upcoming="true"] .remind-btn{display:inline-block}
-
     .no-results{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)}
     .no-results h3{font-size:1.2rem;margin-bottom:10px;color:var(--text-primary)}
 
@@ -168,19 +193,7 @@
     /* FOOTER */
     .footer{background:var(--secondary-bg);padding:60px var(--container-pad) calc(30px + var(--safe-bottom));margin-top:80px;border-top:1px solid var(--border-color)}
 
-    /* RESUME STICKY BAR */
-    .resume-bar{position:fixed;bottom:0;left:0;right:0;height:var(--sticky-resume-h);display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--card-bg);border-top:1px solid var(--border-color);box-shadow:0 -8px 24px rgba(0,0,0,.12);z-index:1600}
-    .resume-title{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
-    .resume-actions{margin-left:auto;display:flex;gap:8px}
-    .resume-btn{background:var(--accent-red);color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:800;cursor:pointer}
-    .resume-close{background:transparent;border:0;font-size:18px;cursor:pointer;opacity:.7}
-
-    /* COMING SOON TABS */
-    .tabs{display:flex;gap:10px;flex-wrap:wrap}
-    .tab{padding:8px 12px;border:1px solid var(--border-color);border-radius:999px;background:var(--card-bg);cursor:pointer;font-weight:800}
-    .tab.active{background:var(--accent-red);border-color:var(--accent-red);color:#fff}
-
-    /* RESPONSIVE */
+    /* ─────────── RESPONSIVE BREAKPOINTS ─────────── */
     @media (max-width:1200px){ :root{ --card-min: 220px; } }
     @media (max-width:992px){ :root{ --card-min: 200px; } .search-bar{width:min(52vw,300px)} }
     @media (max-width:768px){
@@ -197,11 +210,13 @@
       .modal-close{top:10px;right:10px;width:40px;height:40px;font-size:20px}
     }
     @media (max-width:480px){ :root{ --card-min: 140px; } .logo-text{font-size:16px} .movie-title{font-size:14px} }
-    @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important;scroll-behavior:auto!important} .skeleton .sk-poster,.skeleton .sk-bar{animation:none} }
+    @media (prefers-reduced-motion:reduce){
+      *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    }
   </style>
 </head>
 <body>
-  <!-- LOADER -->
+  <!-- Loading -->
   <div class="loading-screen" id="loadingScreen" aria-live="polite" aria-busy="true">
     <img src="logo.jpg" alt="Modern Fact Stories Logo" class="loading-logo" decoding="async" />
     <div class="loading-ring" role="status" aria-label="Loading"></div>
@@ -221,7 +236,6 @@
         <a href="#continue-watching">Continue Watching</a>
         <a href="#trending">Trending</a>
         <a href="#favorites">My List</a>
-        <a href="#coming-soon">Coming Soon</a>
       </div>
     </div>
     <div class="navbar-right">
@@ -245,7 +259,6 @@
         <div class="hero-buttons">
           <button class="btn btn-primary" onclick="openHeroMovie()">▶️ Play</button>
           <button class="btn btn-secondary" onclick="toggleFavoriteHero()">❤️ My List</button>
-          <button class="btn btn-secondary" id="heroRemindBtn" onclick="remindCurrentHero()">🔔 Remind me</button>
         </div>
       </div>
     </div>
@@ -253,30 +266,27 @@
 
   <!-- SEARCH RESULTS -->
   <section class="section" id="search-results" style="display:none;">
-    <div class="section-header"><div class="section-title">🔍 Search Results</div></div>
+    <div class="section-header">
+      <div class="section-title">🔍 Search Results</div>
+    </div>
     <div class="movie-grid" id="searchGrid"></div>
   </section>
 
   <!-- CONTINUE WATCHING -->
   <section class="section" id="continue-watching" style="display:none;">
-    <div class="section-header"><div class="section-title">▶️ Continue Watching</div></div>
-    <div class="movie-grid" id="continueGrid"></div>
-  </section>
-
-  <!-- TOP 10 PH -->
-  <section class="section" id="top10ph">
-    <div class="section-header"><div class="section-title">🇵🇭 Top 10 in the Philippines (Today)</div></div>
-    <div class="movie-grid" id="top10Grid">
-      <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
-      <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
-      <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
+    <div class="section-header">
+      <div class="section-title">▶️ Continue Watching</div>
     </div>
+    <div class="movie-grid" id="continueGrid"></div>
   </section>
 
   <!-- TRENDING -->
   <section class="section" id="trending">
-    <div class="section-header"><div class="section-title">🔥 Trending Now</div></div>
+    <div class="section-header">
+      <div class="section-title">🔥 Trending Now</div>
+    </div>
     <div class="movie-grid" id="trendingGrid">
+      <!-- skeletons -->
       <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
       <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
       <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
@@ -286,8 +296,12 @@
 
   <!-- POPULAR -->
   <section class="section" id="popular-section">
-    <div class="section-header"><div class="section-title">⭐ Popular Movies</div></div>
+    <div class="section-header">
+      <div class="section-title">⭐ Popular Movies</div>
+    </div>
     <div class="movie-grid" id="popularGrid">
+      <!-- skeletons -->
+      <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
       <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
       <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
       <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
@@ -296,27 +310,17 @@
 
   <!-- RECOMMENDED -->
   <section class="section" id="recommended-section">
-    <div class="section-header"><div class="section-title">📺 Recommended For You</div></div>
-    <div class="movie-grid" id="recommendedGrid"></div>
-  </section>
-
-  <!-- COMING SOON (release calendar) -->
-  <section class="section" id="coming-soon">
     <div class="section-header">
-      <div class="section-title">🗓️ Coming Soon</div>
-      <div class="tabs">
-        <button class="tab active" id="tab-movies" onclick="loadComingSoon('movie')">Movies</button>
-        <button class="tab" id="tab-tv" onclick="loadComingSoon('tv')">TV Shows</button>
-      </div>
+      <div class="section-title">📺 Recommended For You</div>
     </div>
-    <div class="movie-grid" id="soonGrid">
-      <div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>
-    </div>
+    <div class="movie-grid" id="recommendedGrid"></div>
   </section>
 
   <!-- FAVORITES -->
   <section class="section" id="favorites">
-    <div class="section-header"><div class="section-title">❤️ My List</div></div>
+    <div class="section-header">
+      <div class="section-title">❤️ My List</div>
+    </div>
     <div class="movie-grid" id="favoritesGrid">
       <p style="grid-column: 1/-1; text-align: center; padding: 40px;">Add movies to your list!</p>
     </div>
@@ -358,20 +362,8 @@
             <button class="btn btn-secondary" onclick="selectServer(3)" id="server3">Server 3</button>
             <button class="btn btn-secondary" onclick="selectServer(4)" id="server4">Server 4</button>
           </div>
-          <div style="margin-top:12px;">
-            <button class="btn btn-secondary" id="modalRemindBtn" onclick="remindCurrent()">🔔 Remind me</button>
-          </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- RESUME STICKY BAR -->
-  <div class="resume-bar" id="resumeBar" aria-hidden="true">
-    <div class="resume-title" id="resumeTitle">Resume: —</div>
-    <div class="resume-actions">
-      <button class="resume-btn" onclick="resumeLast()">Resume</button>
-      <button class="resume-close" aria-label="Close" onclick="dismissResume()">✕</button>
     </div>
   </div>
 
@@ -385,33 +377,41 @@
     <p style="text-align: center; color: var(--text-muted);">&copy; 2025 Modern Fact Stories. Powered by TMDb API.</p>
   </footer>
 
-  <!-- POPUNDER (your new code) -->
+  <!-- ───────────────────── POPUNDER (your new code) ───────────────────── -->
   <script type="text/javascript" data-cfasync="false" src="//idolinflectiongentlemen.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js"></script>
 
-  <!-- MAIN APP -->
+  <!-- Main App (deferred for faster paint) -->
   <script defer>
-  /* requestIdleCallback fallback */
+  /* Polyfill-ish for requestIdleCallback */
   window.requestIdleCallback ||= (cb)=>setTimeout(()=>cb({timeRemaining:()=>0,didTimeout:true}), 1);
 
-  /* Safe storage */
+  /* Safe storage helpers */
   const safeStorage = {
-    get(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch{ return fallback; } },
-    set(key, value){ try{ localStorage.setItem(key, JSON.stringify(value)); }catch{} }
+    get(key, fallback){
+      try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch{ return fallback; }
+    },
+    set(key, value){
+      try{ localStorage.setItem(key, JSON.stringify(value)); }catch{}
+    }
   };
 
-  /* NAV toggle */
+  /* NAV: mobile toggle */
   document.addEventListener('click', (e)=>{
     const btn = document.getElementById('navToggle');
     const links = document.getElementById('navLinks');
     if (!btn || !links) return;
-    if (e.target === btn || btn.contains(e.target)) links.classList.toggle('open');
-    else if (window.innerWidth <= 768 && !links.contains(e.target)) links.classList.remove('open');
+    if (e.target === btn || btn.contains(e.target)){
+      links.classList.toggle('open');
+    } else {
+      if (window.innerWidth <= 768 && !links.contains(e.target)) links.classList.remove('open');
+    }
   });
 
-  /* TMDb */
-  const TMDB_API_KEY = 'f27081ffd1178848ff5106836b2adc93';
+  /* TMDb + App logic (with improved resilience) */
+  const TMDB_API_KEY = 'f27081ffd1178848ff5106836b2adc93'; // note: public on client; rotate if scraped
   const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
   const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+
   const GENRE_MAP = {28:'Action',12:'Adventure',16:'Animation',35:'Comedy',80:'Crime',99:'Documentary',18:'Drama',10751:'Family',14:'Fantasy',36:'History',27:'Horror',10402:'Music',9648:'Mystery',10749:'Romance',878:'Sci-Fi',10770:'TV Movie',53:'Thriller',10752:'War',37:'Western'};
 
   const SERVERS = [
@@ -424,12 +424,11 @@
   let favorites = safeStorage.get('favorites', []);
   let continueWatching = safeStorage.get('continueWatching', []);
   let watchHistory = safeStorage.get('watchHistory', []);
-  let reminders = safeStorage.get('reminders', []); // [{id,type,title,release}]
   let currentMovie = null;
   let currentServerIndex = 0;
+  let autoplayTimer = null;
   let currentSpeed = 1.0;
   let heroMovieId = null;
-  let heroMovieMeta = null;
   let searchTimeout = null;
   let lastSearchAbort = null;
 
@@ -438,18 +437,26 @@
 
   function preloadHero(url){
     if (!url) return Promise.resolve();
-    return new Promise((res)=>{ const img=new Image(); img.onload=res; img.onerror=res; img.src = url.includes('/original')?url.replace('/original','/w1280'):url; });
+    return new Promise((res)=>{
+      const img = new Image();
+      img.onload = res; img.onerror = res;
+      img.src = url.includes('/original') ? url.replace('/original','/w1280') : url;
+    });
   }
+
   function setHeroBackground(url){
     const media = document.getElementById('heroMedia');
     const best = url && url.includes('/original') ? url.replace('/original','/w1280') : url;
     media.style.backgroundImage = best ? `url('${best}')` : '';
   }
+
+  // fetch with timeout + retries
   async function fetchTMDb(endpoint, params = {}, {retries=1, timeoutMs=9000} = {}){
     const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
     url.searchParams.append('api_key', TMDB_API_KEY);
     url.searchParams.append('language', 'en-US');
     Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
     for (let attempt=0; attempt<=retries; attempt++){
       const ctrl = new AbortController();
       const t = setTimeout(()=>ctrl.abort(), timeoutMs);
@@ -460,11 +467,12 @@
         return await res.json();
       }catch(err){
         clearTimeout(t);
-        if (attempt===retries){ console.warn('TMDb error:', err.message||err); return {results: []}; }
+        if (attempt === retries) { console.warn('TMDb error:', err.message||err); return {results: []}; }
         await new Promise(r=>setTimeout(r, 400*(attempt+1)));
       }
     }
   }
+
   function convertMovie(item, isTV=false){
     return {
       id: item.id,
@@ -476,15 +484,13 @@
       poster: item.poster_path ? `${TMDB_IMAGE_BASE}/w500${item.poster_path}` : '',
       backdrop: item.backdrop_path ? `${TMDB_IMAGE_BASE}/original${item.backdrop_path}` : '',
       quality: item.vote_average >= 8 ? '4K' : 'HD',
-      type: isTV ? 'tv' : 'movie',
-      release: isTV ? item.first_air_date : item.release_date
+      type: isTV ? 'tv' : 'movie'
     };
   }
+
   function createMovieCard(movie){
     const card = document.createElement('div');
-    const isUpcoming = !!(movie.release && new Date(movie.release) > new Date());
     card.className = 'movie-card';
-    if (isUpcoming) card.dataset.upcoming = "true";
     card.onclick = () => openModal(movie.id, movie.type);
 
     const isFavorite = favorites.some(f => f.id === movie.id && f.type === movie.type);
@@ -494,10 +500,17 @@
     card.innerHTML = `
       <div class="quality-badge">${movie.quality}</div>
       <div class="poster-wrap">
-        <img class="movie-poster" src="${movie.poster || FALLBACK}" alt="${movie.title}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${FALLBACK}';">
+        <img
+          class="movie-poster"
+          src="${movie.poster || FALLBACK}"
+          alt="${movie.title}"
+          loading="lazy"
+          decoding="async"
+          referrerpolicy="no-referrer"
+          onerror="this.onerror=null; this.src='${FALLBACK}';"
+        >
       </div>
       <button class="action-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${movie.id}, '${movie.type}', event)">${isFavorite ? '❤️' : '🤍'}</button>
-      <button class="remind-btn" onclick="remind(${movie.id}, '${movie.type}', '${movie.title.replace(/'/g, "\\'")}', '${movie.release||''}', event)">🔔 Remind</button>
       <div class="movie-info">
         <div class="movie-title">${movie.title}</div>
         <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:13px;">
@@ -510,7 +523,11 @@
     return card;
   }
 
-  function getContinueProgress(id, type){ const item = continueWatching.find(w => w.id === id && w.type === type); return item ? item.progress : 0; }
+  function getContinueProgress(id, type){
+    const item = continueWatching.find(w => w.id === id && w.type === type);
+    return item ? item.progress : 0;
+  }
+
   function updateContinueWatching(id, type, progress, title){
     const i = continueWatching.findIndex(w => w.id === id && w.type === type);
     const rec = {id, type, progress, title, timestamp: Date.now()};
@@ -518,8 +535,8 @@
     if (continueWatching.length > 20) continueWatching = continueWatching.slice(0,20);
     safeStorage.set('continueWatching', continueWatching);
     loadContinueWatching();
-    maybeShowResume();
   }
+
   async function loadContinueWatching(){
     const section = document.getElementById('continue-watching');
     const grid = document.getElementById('continueGrid');
@@ -531,179 +548,253 @@
     }
   }
 
-  // Rails
-  function loadGrid(gridId, movies){ const grid = document.getElementById(gridId); grid.innerHTML=''; movies.forEach(m=>grid.appendChild(createMovieCard(m))); }
+  function loadMovieGrid(gridId, movies){
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+    movies.forEach(movie => grid.appendChild(createMovieCard(movie)));
+  }
+
   async function loadTrending(){
     const data = await fetchTMDb('/trending/movie/week', {}, {retries:1});
-    const movies = (data.results||[]).map(i=>convertMovie(i,false));
-    loadGrid('trendingGrid', movies);
-    if (movies.length){
+    const movies = (data.results||[]).map(item => convertMovie(item,false));
+    loadMovieGrid('trendingGrid', movies);
+    if (movies.length) {
       const hero = movies[0];
       heroMovieId = {id: hero.id, type: 'movie'};
-      heroMovieMeta = hero;
       await preloadHero(hero.backdrop);
       setHeroBackground(hero.backdrop);
       document.getElementById('heroTitle').textContent = hero.title;
       document.getElementById('heroDesc').textContent = hero.description;
     }
   }
-  async function loadPopular(){ const data = await fetchTMDb('/movie/popular', {}, {retries:1}); loadGrid('popularGrid', (data.results||[]).map(i=>convertMovie(i,false))); }
+
+  async function loadPopular(){
+    const data = await fetchTMDb('/movie/popular', {}, {retries:1});
+    const movies = (data.results||[]).map(item => convertMovie(item,false));
+    loadMovieGrid('popularGrid', movies);
+  }
+
   async function loadRecommended(){
     if (!watchHistory.length) return;
     const last = watchHistory[0];
     const data = await fetchTMDb(`/${last.type}/${last.id}/recommendations`);
-    const movies = (data.results||[]).map(i=>convertMovie(i, last.type==='tv')).slice(0,10);
-    if (movies.length) loadGrid('recommendedGrid', movies);
-  }
-  async function loadTop10PH(){
-    // Use popular with region=PH, pick top10
-    const data = await fetchTMDb('/movie/popular', {region:'PH'}, {retries:1});
-    const movies = (data.results||[]).slice(0,10).map(i=>convertMovie(i,false));
-    loadGrid('top10Grid', movies);
-  }
-  async function loadComingSoon(kind='movie'){
-    document.getElementById('tab-movies').classList.toggle('active', kind==='movie');
-    document.getElementById('tab-tv').classList.toggle('active', kind==='tv');
-    const grid = document.getElementById('soonGrid');
-    grid.innerHTML = '<div class="skeleton"><div class="sk-poster"></div><div class="sk-text"><div class="sk-bar"></div></div></div>';
-    let data;
-    if (kind==='movie'){
-      data = await fetchTMDb('/movie/upcoming', {region:'PH'}, {retries:1});
-    } else {
-      // “Airing today / on the air” mix
-      const a = await fetchTMDb('/tv/airing_today', {}, {retries:1});
-      const b = await fetchTMDb('/tv/on_the_air', {}, {retries:1});
-      data = {results:[...(a.results||[]), ...(b.results||[])]};
-    }
-    const items = (data.results||[]).slice(0,20).map(i=>convertMovie(i, kind==='tv'));
-    loadGrid('soonGrid', items);
+    const movies = (data.results||[]).map(item => convertMovie(item, last.type === 'tv')).slice(0,10);
+    if (movies.length) loadMovieGrid('recommendedGrid', movies);
   }
 
-  // Modal / playback
+  async function loadFavorites(){
+    const grid = document.getElementById('favoritesGrid');
+    if (!favorites.length){
+      grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">Add movies to your list!</p>';
+      return;
+    }
+    grid.innerHTML = '';
+    for (const fav of favorites){
+      const data = await fetchTMDb(`/${fav.type}/${fav.id}`);
+      if (data && data.id) grid.appendChild(createMovieCard(convertMovie(data, fav.type === 'tv')));
+    }
+  }
+
   async function openModal(id, type){
-    if (typeof window._pu === 'function') { window._pu(); } // popunder trigger if available
+    // POPUNDER trigger (smart: requires vendor exposing _pu)
+    if (typeof window._pu === 'function') { window._pu(); }
+
     const data = await fetchTMDb(`/${type}/${id}`);
-    currentMovie = { id: data.id, title: type==='tv'?data.name:data.title, description: data.overview||'No description.', type };
+    currentMovie = {
+      id: data.id, title: type === 'tv' ? data.name : data.title,
+      description: data.overview || 'No description.', type
+    };
+
     document.getElementById('modalTitle').textContent = currentMovie.title;
     document.getElementById('modalDescription').textContent = currentMovie.description;
     document.getElementById('episodeSection').style.display = 'none';
+
     selectServer(1);
     document.getElementById('movieModal').classList.add('active');
     document.body.style.overflow = 'hidden';
+
     addToWatchHistory(id, type, currentMovie.title);
     updateContinueWatching(id, type, 10, currentMovie.title);
   }
-  function selectServer(n){
-    currentServerIndex = n-1;
-    const s = SERVERS[currentServerIndex];
-    document.querySelectorAll('[id^="server"]').forEach((btn,i)=>btn.className = i===currentServerIndex ? 'btn btn-primary' : 'btn btn-secondary');
-    const url = currentMovie.type==='movie' ? `${s.url}/movie/${currentMovie.id}` : `${s.url}/tv/${currentMovie.id}/1/1`;
-    document.getElementById('videoPlayer').src = url;
+
+  function selectServer(serverNum){
+    currentServerIndex = serverNum - 1;
+    const server = SERVERS[currentServerIndex];
+    document.querySelectorAll('[id^="server"]').forEach((btn, i) => {
+      btn.className = i === currentServerIndex ? 'btn btn-primary' : 'btn btn-secondary';
+    });
+
+    let embedUrl = '';
+    if (currentMovie.type === 'movie') embedUrl = `${server.url}/movie/${currentMovie.id}`;
+    else embedUrl = `${server.url}/tv/${currentMovie.id}/1/1`;
+
+    const iframe = document.getElementById('videoPlayer');
+    iframe.src = embedUrl;
   }
-  function closeModal(){ document.getElementById('movieModal').classList.remove('active'); document.getElementById('videoPlayer').src=''; document.body.style.overflow='auto'; }
+
+  function closeModal(){
+    document.getElementById('movieModal').classList.remove('active');
+    document.getElementById('videoPlayer').src = '';
+    document.body.style.overflow = 'auto';
+    if (autoplayTimer) clearTimeout(autoplayTimer);
+  }
+
+  function toggleFavorite(id, type, event){
+    event.stopPropagation();
+    const index = favorites.findIndex(f => f.id === id && f.type === type);
+    if (index > -1) favorites.splice(index,1); else favorites.push({id, type});
+    safeStorage.set('favorites', favorites);
+    loadFavorites();
+  }
+
+  function openHeroMovie(){ if (heroMovieId) openModal(heroMovieId.id, heroMovieId.type); }
+  function toggleFavoriteHero(){
+    if (!heroMovieId) return;
+    const index = favorites.findIndex(f => f.id === heroMovieId.id && f.type === heroMovieId.type);
+    if (index > -1) favorites.splice(index, 1);
+    else favorites.push({id: heroMovieId.id, type: heroMovieId.type});
+    safeStorage.set('favorites', favorites);
+    loadFavorites();
+  }
+
+  function addToWatchHistory(id, type, title){
+    const i = watchHistory.findIndex(w => w.id === id && w.type === type);
+    if (i>-1) watchHistory.splice(i,1);
+    watchHistory.unshift({id, type, title, timestamp: Date.now()});
+    if (watchHistory.length > 50) watchHistory = watchHistory.slice(0,50);
+    safeStorage.set('watchHistory', watchHistory);
+    loadRecommended();
+  }
+
   function skipBackward(){ try{ document.getElementById('videoPlayer').contentWindow.postMessage({action:'seek',time:-10}, '*'); }catch{} }
   function skipForward(){ try{ document.getElementById('videoPlayer').contentWindow.postMessage({action:'seek',time:10}, '*'); }catch{} }
   function changePlaybackSpeed(){
-    const speeds=[0.5,0.75,1.0,1.25,1.5,2.0]; const idx=speeds.indexOf(currentSpeed);
-    currentSpeed = speeds[(idx+1)%speeds.length];
-    document.getElementById('speedIndicator').textContent = currentSpeed+'x';
+    const speeds = [0.5,0.75,1.0,1.25,1.5,2.0];
+    const currentIndex = speeds.indexOf(currentSpeed);
+    currentSpeed = speeds[(currentIndex + 1) % speeds.length];
+    document.getElementById('speedIndicator').textContent = currentSpeed + 'x';
     try{ document.getElementById('videoPlayer').contentWindow.postMessage({action:'speed',value:currentSpeed}, '*'); }catch{}
   }
-  function togglePIP(){ try{ const f=document.getElementById('videoPlayer'); if (document.pictureInPictureElement) document.exitPictureInPicture(); else f.requestPictureInPicture?.(); }catch{ alert('Picture-in-Picture not supported'); } }
-  function toggleFullscreen(){ const p=document.querySelector('.video-player'); if (!document.fullscreenElement) p.requestFullscreen?.(); else document.exitFullscreen?.(); }
-
-  // Lists + history
-  function toggleFavorite(id, type, ev){ ev.stopPropagation(); const i=favorites.findIndex(f=>f.id===id&&f.type===type); if(i>-1) favorites.splice(i,1); else favorites.push({id,type}); safeStorage.set('favorites',favorites); loadFavorites(); }
-  function openHeroMovie(){ if (heroMovieId) openModal(heroMovieId.id, heroMovieId.type); }
-  function toggleFavoriteHero(){ if(!heroMovieId) return; const i=favorites.findIndex(f=>f.id===heroMovieId.id&&f.type===heroMovieId.type); if(i>-1) favorites.splice(i,1); else favorites.push({id:heroMovieId.id,type:heroMovieId.type}); safeStorage.set('favorites',favorites); loadFavorites(); }
-  function addToWatchHistory(id, type, title){ const i=watchHistory.findIndex(w=>w.id===id&&w.type===type); if(i>-1) watchHistory.splice(i,1); watchHistory.unshift({id,type,title,timestamp:Date.now()}); if(watchHistory.length>50) watchHistory=watchHistory.slice(0,50); safeStorage.set('watchHistory',watchHistory); loadRecommended(); }
-  async function loadFavorites(){
-    const grid = document.getElementById('favoritesGrid');
-    if (!favorites.length){ grid.innerHTML='<p style="grid-column:1/-1; text-align:center; padding:40px;">Add movies to your list!</p>'; return; }
-    grid.innerHTML=''; for (const fav of favorites){ const d=await fetchTMDb(`/${fav.type}/${fav.id}`); if (d&&d.id) grid.appendChild(createMovieCard(convertMovie(d, fav.type==='tv'))); }
+  function togglePIP(){
+    try{
+      const iframe = document.getElementById('videoPlayer');
+      if (document.pictureInPictureElement) document.exitPictureInPicture();
+      else iframe.requestPictureInPicture?.();
+    }catch{ alert('Picture-in-Picture not supported'); }
+  }
+  function toggleFullscreen(){
+    const player = document.querySelector('.video-player');
+    if (!document.fullscreenElement) player.requestFullscreen?.(); else document.exitFullscreen?.();
   }
 
-  // Search (debounced + abortable)
-  function showNoResults(q){ const g=document.getElementById('searchGrid'); g.innerHTML=`<div class="no-results"><h3>😕 No Results Found</h3><p>No movies or TV shows found for "<strong>${q.replace(/[<>&]/g,'')}</strong>"</p><p style="margin-top:10px">Try different keywords</p></div>`; }
-  function clearSearch(){ searchInput.value=''; searchClear.style.display='none'; showAllSections(); }
-  function showAllSections(){ ['search-results'].forEach(id=>document.getElementById(id).style.display='none'); ['trending','popular-section','recommended-section','heroBanner','top10ph','coming-soon'].forEach(id=>document.getElementById(id).style.display='block'); }
-  function doSearchNow(q){
-    (async ()=>{
-      const searchSection = document.getElementById('search-results');
-      const searchGrid = document.getElementById('searchGrid');
-      ['trending','popular-section','recommended-section','heroBanner','top10ph','coming-soon'].forEach(id=>document.getElementById(id).style.display='none');
-      searchSection.style.display='block';
-      searchGrid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;">🔍 Searching...</div>';
-      try{
-        if (lastSearchAbort) lastSearchAbort.abort();
-        lastSearchAbort = new AbortController();
-        const url = new URL('https://api.themoviedb.org/3/search/multi');
-        url.searchParams.set('api_key', TMDB_API_KEY); url.searchParams.set('language','en-US'); url.searchParams.set('query', q); url.searchParams.set('page','1');
-        const res = await fetch(url, {signal: lastSearchAbort.signal});
-        const data = await res.json();
-        const results = (data.results||[]).filter(i=>i.media_type==='movie'||i.media_type==='tv');
-        const movies = results.map(i=>convertMovie(i, i.media_type==='tv'));
-        movies.length ? loadGrid('searchGrid', movies) : showNoResults(q);
-      }catch(err){ if (err.name!=='AbortError') searchGrid.innerHTML='<div class="no-results"><h3>❌ Search Error</h3><p>Unable to search. Please try again.</p></div>'; }
-    })();
-  }
-  searchInput?.addEventListener('input', (e)=>{ const q=e.target.value.trim(); if(q.length>0){ searchClear.style.display='block'; clearTimeout(searchTimeout); searchTimeout=setTimeout(()=>doSearchNow(q), 400);} else { searchClear.style.display='none'; clearSearch(); }});
-  searchInput?.addEventListener('keypress', (e)=>{ if (e.key==='Enter'){ const q=searchInput.value.trim(); if(q){ clearTimeout(searchTimeout); doSearchNow(q); } }});
-
-  // Remind me
-  function remind(id, type, title, release, ev){ ev?.stopPropagation(); reminders = reminders.filter(r=>!(r.id===id&&r.type===type)); reminders.push({id,type,title,release}); safeStorage.set('reminders',reminders); toast(`🔔 Reminder set for: ${title}`); }
-  function remindCurrent(){ if (heroMovieMeta) remind(heroMovieMeta.id,'movie',heroMovieMeta.title, heroMovieMeta.release); }
-  function remindCurrentHero(){ remindCurrent(); }
-  function remindCurrentModal(){ if (currentMovie) remind(currentMovie.id,currentMovie.type,currentMovie.title,''); }
-  function remindCurrent(){ /* alias used above */ }
-  function toast(msg){ const el=document.createElement('div'); el.textContent=msg; Object.assign(el.style,{position:'fixed',bottom:'calc(var(--sticky-resume-h) + 10px)',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,.85)',color:'#fff',padding:'10px 14px',borderRadius:'10px',zIndex:1800,fontWeight:'800'}); document.body.appendChild(el); setTimeout(()=>{ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); },1600); }
-
-  // Resume bar
-  function maybeShowResume(){
-    const last = continueWatching[0];
-    if (!last || last.progress<=0) return dismissResume();
-    const bar = document.getElementById('resumeBar');
-    document.getElementById('resumeTitle').textContent = `Resume: ${last.title} (${last.progress|0}%)`;
-    bar.style.display='flex'; bar.setAttribute('aria-hidden','false');
-  }
-  function resumeLast(){ const last = continueWatching[0]; if (last) openModal(last.id, last.type); }
-  function dismissResume(){ const bar=document.getElementById('resumeBar'); bar.style.display='none'; bar.setAttribute('aria-hidden','true'); }
-
-  // Theme
   document.getElementById('themeToggle').addEventListener('click', () => {
     const html = document.documentElement;
     if (html.hasAttribute('data-theme')) { html.removeAttribute('data-theme'); document.getElementById('themeToggle').textContent = '🌙'; }
     else { html.setAttribute('data-theme', 'dark'); document.getElementById('themeToggle').textContent = '☀️'; }
   });
 
-  // INIT
+  // Search (debounced + abortable)
+  function doSearchNow(q){
+    return (async ()=>{
+      const searchSection = document.getElementById('search-results');
+      const searchGrid = document.getElementById('searchGrid');
+      document.getElementById('trending').style.display = 'none';
+      document.getElementById('popular-section').style.display = 'none';
+      document.getElementById('recommended-section').style.display = 'none';
+      document.getElementById('heroBanner').style.display = 'block';
+
+      searchSection.style.display = 'block';
+      searchGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;">🔍 Searching...</div>';
+
+      try{
+        if (lastSearchAbort) lastSearchAbort.abort();
+        lastSearchAbort = new AbortController();
+        const url = new URL('https://api.themoviedb.org/3/search/multi');
+        url.searchParams.set('api_key', TMDB_API_KEY);
+        url.searchParams.set('language', 'en-US');
+        url.searchParams.set('query', q);
+        url.searchParams.set('page', '1');
+        const res = await fetch(url, {signal: lastSearchAbort.signal});
+        const data = await res.json();
+        const results = (data.results||[]).filter(i => i.media_type==='movie' || i.media_type==='tv');
+        const movies = results.map(item => convertMovie(item, item.media_type === 'tv'));
+        if (movies.length) loadMovieGrid('searchGrid', movies);
+        else showNoResults(q);
+      }catch(err){
+        if (err.name==='AbortError') return;
+        searchGrid.innerHTML = '<div class="no-results"><h3>❌ Search Error</h3><p>Unable to search. Please try again.</p></div>';
+      }
+    })();
+  }
+
+  searchInput?.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    if (query.length > 0) {
+      searchClear.style.display = 'block';
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(()=>doSearchNow(query), 400);
+    } else {
+      searchClear.style.display = 'none';
+      clearSearch();
+    }
+  });
+  searchInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const query = searchInput.value.trim();
+      if (query) { clearTimeout(searchTimeout); doSearchNow(query); }
+    }
+  });
+
+  function showNoResults(query){
+    const searchGrid = document.getElementById('searchGrid');
+    searchGrid.innerHTML = `
+      <div class="no-results">
+        <h3>😕 No Results Found</h3>
+        <p>No movies or TV shows found for "<strong>${query.replace(/[<>&]/g,'')}</strong>"</p>
+        <p style="margin-top:10px">Try different keywords</p>
+      </div>
+    `;
+  }
+
+  function clearSearch(){
+    searchInput.value = '';
+    searchClear.style.display = 'none';
+    showAllSections();
+  }
+
+  function showAllSections(){
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('trending').style.display = 'block';
+    document.getElementById('popular-section').style.display = 'block';
+    document.getElementById('recommended-section').style.display = 'block';
+    document.getElementById('heroBanner').style.display = 'block';
+  }
+
   async function init(){
-    // Loader failsafe
+    // Stopgap: hide loader after 3.5s max, even on slow networks
     const loader = document.getElementById('loadingScreen');
     const loaderFailSafe = setTimeout(()=> loader.classList.add('hidden'), 3500);
 
-    await Promise.all([ loadTrending(), loadTop10PH(), loadPopular(), loadContinueWatching(), loadFavorites(), loadRecommended(), loadComingSoon('movie') ]);
-    requestIdleCallback(()=>{ loader.classList.add('hidden'); clearTimeout(loaderFailSafe); maybeShowResume(); }, {timeout:1000});
+    await Promise.all([
+      loadTrending(),
+      loadPopular(),
+      loadContinueWatching(),
+      loadFavorites(),
+      loadRecommended()
+    ]);
+
+    // little idle delay so images settle
+    requestIdleCallback(()=>{ loader.classList.add('hidden'); clearTimeout(loaderFailSafe); }, {timeout: 1000});
   }
   window.addEventListener('load', init);
-
-  // Service worker register
-  if ('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }); }
-
-  // SEO JSON-LD (basic ItemList for visible rails)
-  window.addEventListener('load', ()=>{
-    const rails = ['trendingGrid','popularGrid','top10Grid'];
-    rails.forEach((id)=>{
-      const grid=document.getElementById(id); if(!grid) return;
-      const items=[...grid.querySelectorAll('.movie-card')].slice(0,10).map((_,i)=>({ "@type":"ListItem","position":i+1,"url":location.origin+"/#title-"+(i+1)}));
-      const ld={ "@context":"https://schema.org","@type":"ItemList","itemListElement":items };
-      const s=document.createElement('script'); s.type='application/ld+json'; s.textContent=JSON.stringify(ld); document.head.appendChild(s);
-    });
-  });
   </script>
 
-  <!-- NATIVE BANNER (your new code) -->
+  <!-- ─────────────────────  NATIVE BANNER (your new code)  ─────────────────────
+       Strategy: load vendor script once, and dynamically assign the single required
+       container ID to whichever placement is visible (inline on desktop, sticky on mobile)
+  -->
   <style>
+    /* Inline native (desktop/tablet) */
     .native-inline-wrap{max-width:1100px;margin:24px auto;padding:0 var(--container-pad);display:none}
     .native-inline-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:14px;box-shadow:var(--shadow-sm);overflow:hidden}
     .native-inline-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--secondary-bg);border-bottom:1px solid var(--border-color)}
@@ -711,6 +802,8 @@
     .native-inline-close{background:transparent;border:0;font-size:18px;cursor:pointer;opacity:.7}
     .native-inline-body{padding:8px}
     .native-divider{max-width:1100px;margin:28px auto 12px;padding:0 var(--container-pad);color:var(--text-secondary);font-weight:800;letter-spacing:.2px;text-transform:uppercase;font-size:12px}
+
+    /* Sticky native (mobile) */
     .native-sticky{position:sticky;bottom:0;left:0;right:0;z-index:1500;background:var(--card-bg);border-top:1px solid var(--border-color);padding:8px 10px calc(8px + var(--safe-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.15);display:none}
     .native-sticky-inner{display:flex;align-items:center;gap:10px}
     .native-sticky-title{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -721,20 +814,22 @@
     @media (min-width:769px){.native-sticky{display:none}}
   </style>
 
+  <!-- Desktop/Tablet Inline Anchor -->
   <div id="native-inline-anchor" class="native-inline-wrap" aria-hidden="true">
-    <div class="native-divider">Sponsored</div>
+    <div class="native-divider">You might also like</div>
     <div class="native-inline-card">
       <div class="native-inline-head">
         <b>Recommended</b>
         <button class="native-inline-close" type="button" aria-label="Close" onclick="window.__nativeAd?.dismiss('inline')">✕</button>
       </div>
       <div class="native-inline-body">
-        <!-- Will receive the vendor container id on desktop when in-view -->
-        <div id="mfs_vendor_slot_inline"></div>
+        <!-- Vendor container will be assigned here on desktop -->
+        <div id="mfsp_vendor_slot_inline"></div>
       </div>
     </div>
   </div>
 
+  <!-- Mobile Sticky Anchor -->
   <div id="native-sticky-anchor" class="native-sticky" aria-hidden="true">
     <div class="native-sticky-inner">
       <div class="native-sticky-title">Trending picks for you</div>
@@ -743,63 +838,82 @@
         <button class="native-sticky-close" type="button" aria-label="Close" onclick="window.__nativeAd?.dismiss('sticky')">✕</button>
       </div>
     </div>
-    <div style="margin-top:8px;"><div id="mfs_vendor_slot_mobile"></div></div>
+    <div style="margin-top:8px;">
+      <!-- Vendor container will be assigned here on mobile -->
+      <div id="mfsp_vendor_slot_mobile"></div>
+    </div>
   </div>
 
-  <!-- Load vendor script ONCE -->
+  <!-- Load your vendor script ONCE, and give it a live container id where needed -->
   <script async data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>
   <script>
   (function(){
-    const VENDOR_ID = "container-a4bf814c4146624bf8b42bd02f5c6d3c";
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"") || (window.matchMedia && window.matchMedia("(pointer:coarse)").matches);
+    const VENDOR_ID = "container-a4bf814c4146624bf8b42bd02f5c6d3c"; // must exist on exactly one visible element
+    const startAt = Date.now();
+
+    // simple UA+pointer check
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"") ||
+                     (window.matchMedia && window.matchMedia("(pointer:coarse)").matches);
+
     const inlineAnchor = document.getElementById("native-inline-anchor");
     const stickyAnchor = document.getElementById("native-sticky-anchor");
-    const inlineSlot   = document.getElementById("mfs_vendor_slot_inline");
-    const mobileSlot   = document.getElementById("mfs_vendor_slot_mobile");
-
-    const analytics = (ev, extra={})=>{ try{ console.log('[mfs-analytics]', ev, extra); }catch{} };
+    const inlineSlot   = document.getElementById("mfsp_vendor_slot_inline");
+    const mobileSlot   = document.getElementById("mfsp_vendor_slot_mobile");
 
     function assignVendorIdTo(el){
-      [inlineSlot, mobileSlot].forEach(n => { if (n && n.id === VENDOR_ID) n.id = (n===inlineSlot?"mfs_vendor_slot_inline":"mfs_vendor_slot_mobile"); });
+      // remove id from both, then set on target
+      [inlineSlot, mobileSlot].forEach(n => { if (n && n.id === VENDOR_ID) n.id = (n===inlineSlot?"mfsp_vendor_slot_inline":"mfsp_vendor_slot_mobile"); });
       if (el && el.id !== VENDOR_ID) el.id = VENDOR_ID;
     }
+
     function showInline(){
+      if (!inlineAnchor) return;
       const popular = document.getElementById("popular-section");
       const footer = document.querySelector("footer") || document.body;
-      (popular && popular.parentNode) ? popular.parentNode.insertBefore(inlineAnchor, popular.nextSibling) : document.body.insertBefore(inlineAnchor, footer);
+      (popular && popular.parentNode)
+        ? popular.parentNode.insertBefore(inlineAnchor, popular.nextSibling)
+        : document.body.insertBefore(inlineAnchor, footer);
       assignVendorIdTo(inlineSlot);
-      inlineAnchor.style.display="block"; inlineAnchor.setAttribute('aria-hidden','false');
-      analytics('ad_inline_render');
+      inlineAnchor.style.display = "block";
+      inlineAnchor.setAttribute('aria-hidden','false');
     }
+
     function showSticky(){
+      if (!stickyAnchor) return;
       const footer = document.querySelector("footer") || document.body;
       footer.parentNode.insertBefore(stickyAnchor, footer);
       assignVendorIdTo(mobileSlot);
-      stickyAnchor.style.display="block"; stickyAnchor.setAttribute('aria-hidden','false');
-      analytics('ad_sticky_render');
+      stickyAnchor.style.display = "block";
+      stickyAnchor.setAttribute('aria-hidden','false');
     }
 
+    // public helpers
     window.__nativeAd = {
-      dismiss(where){ if (where==='inline'){ inlineAnchor&&(inlineAnchor.style.display="none"); inlineAnchor?.setAttribute('aria-hidden','true'); } else { stickyAnchor&&(stickyAnchor.style.display="none"); stickyAnchor?.setAttribute('aria-hidden','true'); } analytics('ad_dismiss',{where}); },
-      cta(){ analytics('ad_cta'); }
+      dismiss(where){
+        if (where==='inline'){ inlineAnchor && (inlineAnchor.style.display="none"); inlineAnchor?.setAttribute('aria-hidden','true'); }
+        else { stickyAnchor && (stickyAnchor.style.display="none"); stickyAnchor?.setAttribute('aria-hidden','true'); }
+      },
+      cta(){ /* optional: hook for analytics */ }
     };
 
     function initNative(){
-      if (isMobile){ showSticky(); return; }
-      // Desktop: render inline when target rail is 70% in view
-      const target = document.getElementById("popular-section");
-      if (!('IntersectionObserver' in window) || !target){ showInline(); return; }
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{
-          if (e.isIntersecting && e.intersectionRatio >= 0.7){
-            showInline(); io.disconnect(); analytics('ad_inline_inview', {ratio:e.intersectionRatio});
-          }
-        });
-      }, {threshold:[0.7]});
-      io.observe(target);
+      // small dwell so it doesn't flash instantly
+      const dwell = isMobile ? 800 : 600;
+      if ((Date.now()-startAt) < dwell) { setTimeout(initNative, 200); return; }
+      if (isMobile){
+        showSticky();
+      } else {
+        // show when Popular scrolled into view for nicer integration
+        const popular = document.getElementById("popular-section");
+        if (!popular){ showInline(); return; }
+        const io = new IntersectionObserver((entries)=>{
+          entries.forEach(e=>{ if (e.isIntersecting){ showInline(); io.disconnect(); } });
+        },{ rootMargin:"0px 0px -33% 0px", threshold:0.01 });
+        io.observe(popular);
+      }
     }
 
-    // Hide sticky while modal is open
+    // hide sticky while modal is open (avoid overlap)
     const modal = document.getElementById("movieModal");
     if (modal){
       const mo = new MutationObserver(()=>{
@@ -810,8 +924,10 @@
       mo.observe(modal, { attributes:true, attributeFilter:["class"] });
     }
 
+    // kick it
     window.addEventListener('load', initNative);
   })();
   </script>
+  <!-- ─────────────────────────────  END NATIVE  ───────────────────────────── -->
 </body>
 </html>

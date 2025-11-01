@@ -26,20 +26,12 @@ function hideLoaderSoon(){
 }
 
 /* ===== Fetch (uses backend proxy, no API_KEY exposed) ===== */
-async function fxProxy(endpoint, params={}, { retries=1, timeout=9000 } = {}) {
-  let url = null;
-
-  // Support for trending/movie or trending/tv etc.
-  if (endpoint.startsWith('/trending/')) {
-    url = `/api/tmdb-proxy?mode=trending&type=${encodeURIComponent(params.type || endpoint.split('/')[2])}`;
-  } else if (endpoint.startsWith('/search/multi')) {
-    url = `/api/tmdb-proxy?mode=search&query=${encodeURIComponent(params.query || '')}`;
-  } else if (/^\/(movie|tv)/.test(endpoint)) {
-    // Single item by id
-    url = `/api/tmdb-proxy?mode=title&type=${endpoint.split('/')[1]}&id=${endpoint.split('/')[2]}`;
-  } else {
-    url = `/api/tmdb-proxy`;
-  }
+async function fxProxy({mode, type, query, id, page=1}, { retries=1, timeout=9000 } = {}) {
+  let url = `/api/tmdb-proxy?mode=${encodeURIComponent(mode)}`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  if (query !== undefined) url += `&query=${encodeURIComponent(query)}`;
+  if (id !== undefined) url += `&id=${encodeURIComponent(id)}`;
+  if (page !== undefined) url += `&page=${encodeURIComponent(page)}`;
 
   for (let a = 0; a <= retries; a++) {
     const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), timeout);
@@ -58,14 +50,14 @@ async function fxProxy(endpoint, params={}, { retries=1, timeout=9000 } = {}) {
 
 /* ===== Data sources ===== */
 async function fetchTrending(type) {
-  const d = await fxProxy(`/trending/${type}/week`, { type });
+  const d = await fxProxy({mode:'trending', type});
   return (d.results || []);
 }
 
 async function fetchTrendingAnime() {
   let bag = [];
   for (let p = 1; p <= 3; p++) {
-    const d = await fxProxy('/trending/tv/week', { type: 'tv' });
+    const d = await fxProxy({mode:'trending', type: 'tv', page:p});
     const filtered = (d.results||[]).filter(it => it.original_language==='ja' && (it.genre_ids||[]).includes(16));
     bag = bag.concat(filtered);
   }
@@ -126,7 +118,7 @@ function showDetails(it){
   pushContinue({ id: it.id, type: it.type, title: it.title, poster: it.poster_path || '' });
 }
 async function showById(id, type){
-  const d = await fxProxy(`/${type}/${id}`);
+  const d = await fxProxy({mode:'title', type, id});
   const it = toItem(d, type);
   showDetails(it);
 }

@@ -152,9 +152,9 @@
     .poster-wrap{
       position:relative;
       width:100%;
-      aspect-ratio: 2 / 3;        /* smooth, no jank */
+      aspect-ratio: 2 / 3;
       overflow:hidden;
-      background:#111;             /* subtle skeleton bg */
+      background:#111;
     }
     .poster-wrap img.movie-poster{
       position:absolute; inset:0;
@@ -265,7 +265,6 @@
   <!-- HERO -->
   <section class="hero" id="heroBanner">
     <div class="hero-inner">
-      <!-- Backdrop via JS as background-image on this div -->
       <div id="heroMedia" class="hero-media"></div>
       <div class="hero-content">
         <span class="hero-badge">⚡ Featured</span>
@@ -384,8 +383,8 @@
     <p style="text-align: center; color: var(--text-muted);">&copy; 2025 Modern Fact Stories. Powered by TMDb API.</p>
   </footer>
 
-  <!-- Popunder tag (once) -->
-  <script type="text/javascript" src="//pl27965320.effectivegatecpm.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js"></script>
+  <!-- Popunder tag (once) — UPDATED DOMAIN -->
+  <script type="text/javascript" src="//idolinflectiongentlemen.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js"></script>
 
   <script>
     /* NAV: mobile toggle */
@@ -395,7 +394,6 @@
       if (e.target === btn || btn.contains(e.target)){
         links.classList.toggle('open');
       } else {
-        // close when clicking outside on small screens
         if (window.innerWidth <= 768 && !links.contains(e.target)) links.classList.remove('open');
       }
     });
@@ -431,7 +429,6 @@
 
     function setHeroBackground(url){
       const media = document.getElementById('heroMedia');
-      // prefer w1280 for faster first paint if TMDb original is used
       const best = url && url.includes('/original') ? url.replace('/original','/w1280') : url;
       media.style.backgroundImage = best ? `url('${best}')` : '';
     }
@@ -465,7 +462,6 @@
       };
     }
 
-    /* UPDATED: poster wrapper + fallback */
     function createMovieCard(movie){
       const card = document.createElement('div');
       card.className = 'movie-card';
@@ -720,7 +716,6 @@
     async function performSearch(query){
       const searchSection = document.getElementById('search-results');
       const searchGrid = document.getElementById('searchGrid');
-      // Hide other sections
       document.getElementById('trending').style.display = 'none';
       document.getElementById('popular-section').style.display = 'none';
       document.getElementById('recommended-section').style.display = 'none';
@@ -812,6 +807,7 @@
         <button class="native-inline-close" type="button" aria-label="Close" onclick="window.__nativeAd?.dismiss('inline')">✕</button>
       </div>
       <div class="native-inline-body">
+        <!-- This container will have the vendor ID dynamically ensured -->
         <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
       </div>
     </div>
@@ -827,7 +823,8 @@
       </div>
     </div>
     <div style="margin-top:8px;">
-      <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c--mobile"></div>
+      <!-- Start without an id to avoid duplicate IDs; we'll assign it on mobile when showing -->
+      <div id="native-mobile-slot"></div>
     </div>
   </div>
 
@@ -879,9 +876,10 @@
   </script>
 
   <script>
-  /* NATIVE BANNER: Desktop (inline) + Mobile (sticky) with caps/cooldowns */
+  /* NATIVE BANNER: Desktop (inline) + Mobile (sticky) with caps/cooldowns — UPDATED DOMAIN */
   (function(){
-    const AD_SRC = "//pl27965420.effectivegatecpm.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js";
+    const AD_SRC = "//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js";
+    const ZONE_ID = "container-a4bf814c4146624bf8b42bd02f5c6d3c";
     const DESKTOP_COOLDOWN = 120000; // 2 min
     const MOBILE_COOLDOWN  = 180000; // 3 min
     const DWELL_DESKTOP    = 6000;   // 6s
@@ -941,7 +939,26 @@
       document.body.appendChild(s);
     }
 
+    // Ensure only the visible placement has the vendor's expected container ID
+    function assignZoneIdForInline(){
+      const inline = document.querySelector("#native-inline-anchor .native-inline-body div");
+      const mobileSlot = document.getElementById("native-mobile-slot");
+      // Remove ID from mobile (if any)
+      if (mobileSlot && mobileSlot.id === ZONE_ID) mobileSlot.id = "native-mobile-slot";
+      // Assign to inline
+      if (inline && inline.id !== ZONE_ID) inline.id = ZONE_ID;
+    }
+    function assignZoneIdForSticky(){
+      const inline = document.querySelector("#native-inline-anchor .native-inline-body div");
+      const mobileSlot = document.getElementById("native-mobile-slot");
+      // Remove ID from inline (avoid duplicate)
+      if (inline && inline.id === ZONE_ID) inline.id = "";
+      // Assign vendor ID to the mobile slot
+      if (mobileSlot && mobileSlot.id !== ZONE_ID) mobileSlot.id = ZONE_ID;
+    }
+
     function showInline(){
+      assignZoneIdForInline();
       const anchor = document.getElementById("native-inline-anchor");
       if (!anchor) return;
       const popular = document.getElementById("popular-section");
@@ -954,6 +971,7 @@
     }
 
     function showSticky(){
+      assignZoneIdForSticky();
       const bar = document.getElementById("native-sticky-anchor");
       if (!bar) return;
       const footer = document.querySelector("footer") || document.body;
@@ -998,7 +1016,7 @@
         }
         snooze(SNOOZE_HOURS);
       },
-      cta(){ /* hook for tracking if needed */ }
+      cta(){ /* optional tracking hook */ }
     };
 
     // Hide mobile sticky while modal is open (avoid overlap)
@@ -1021,4 +1039,3 @@
   <!-- ─────────────────────────────  END SMART ADS (BOTH)  ───────────────────────────── -->
 </body>
 </html>
-```

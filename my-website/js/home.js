@@ -1,6 +1,4 @@
 /* ===== Small helpers & config ===== */
-const API_KEY = 'f27081ffd1178848ff5106836b2adc93';
-const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_WBACK = 'https://image.tmdb.org/t/p/w1280';
 const IMG_WPOST = 'https://image.tmdb.org/t/p/w500';
 
@@ -16,7 +14,7 @@ const store = {
 /* ===== State ===== */
 let currentItem = null;
 let heroItem = null;
-let continueWatching = store.get('continue', []); // {id,type,title,poster,progress,timestamp}
+let continueWatching = store.get('continue', []);
 let lastSearchAbort = null;
 let searchTimer = null;
 
@@ -27,51 +25,47 @@ function hideLoaderSoon(){
   requestIdleCallback(()=>{ loader?.classList.add('hidden'); clearTimeout(kill); }, {timeout: 800});
 }
 
-/* ===== Fetch ===== */
-async function fx(endpoint, params={}, {retries=1, timeout=9000} = {}){
-  const url = new URL(BASE_URL + endpoint);
-  url.searchParams.set('api_key', API_KEY);
-  url.searchParams.set('language','en-US');
-  Object.entries(params).forEach(([k,v])=> (v!=null) && url.searchParams.set(k, v));
-  for (let a=0;a<=retries;a++){
+/* ===== Fetch (uses backend proxy, no API_KEY exposed) ===== */
+async function fxProxy(endpoint, params={}, { retries=1, timeout=9000 } = {}) {
+  let url = null;
+
+  // Support for trending/movie or trending/tv etc.
+  if (endpoint.startsWith('/trending/')) {
+    url = `/api/tmdb-proxy?mode=trending&type=${encodeURIComponent(params.type || endpoint.split('/')[2])}`;
+  } else if (endpoint.startsWith('/search/multi')) {
+    url = `/api/tmdb-proxy?mode=search&query=${encodeURIComponent(params.query || '')}`;
+  } else if (/^\/(movie|tv)/.test(endpoint)) {
+    // Single item by id
+    url = `/api/tmdb-proxy?mode=title&type=${endpoint.split('/')[1]}&id=${endpoint.split('/')[2]}`;
+  } else {
+    url = `/api/tmdb-proxy`;
+  }
+
+  for (let a = 0; a <= retries; a++) {
     const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), timeout);
-    try{
-      const res = await fetch(url, {signal: ctrl.signal});
+    try {
+      const res = await fetch(url, { signal: ctrl.signal });
       clearTimeout(t);
-      if (!res.ok) throw new Error('HTTP '+res.status);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       return await res.json();
-    }catch(e){
+    } catch (e) {
       clearTimeout(t);
-      if (a===retries) return {results:[]};
+      if (a === retries) return { results: [] };
       await new Promise(r=>setTimeout(r, 300*(a+1)));
     }
   }
 }
 
-function toItem(raw, typeGuess){
-  const isTV = (typeGuess ? typeGuess==='tv' : raw.media_type==='tv');
-  return {
-    id: raw.id,
-    type: isTV ? 'tv' : 'movie',
-    title: isTV ? (raw.name || raw.title) : (raw.title || raw.name),
-    overview: raw.overview || '',
-    poster: raw.poster_path ? (IMG_WPOST + raw.poster_path) : '',
-    poster_path: raw.poster_path || '',
-    backdrop: raw.backdrop_path ? (IMG_WBACK + raw.backdrop_path) : '',
-    rating: raw.vote_average ? raw.vote_average.toFixed(1) : '—',
-    year: isTV ? (raw.first_air_date||'').slice(0,4) : (raw.release_date||'').slice(0,4)
-  };
-}
-
 /* ===== Data sources ===== */
-async function fetchTrending(type){  // "movie" | "tv"
-  const d = await fx(`/trending/${type}/week`);
+async function fetchTrending(type) {
+  const d = await fxProxy(`/trending/${type}/week`, { type });
   return (d.results || []);
 }
-async function fetchTrendingAnime(){
+
+async function fetchTrendingAnime() {
   let bag = [];
-  for (let p=1;p<=3;p++){
-    const d = await fx('/trending/tv/week', {page:p});
+  for (let p = 1; p <= 3; p++) {
+    const d = await fxProxy('/trending/tv/week', { type: 'tv' });
     const filtered = (d.results||[]).filter(it => it.original_language==='ja' && (it.genre_ids||[]).includes(16));
     bag = bag.concat(filtered);
   }
@@ -128,14 +122,11 @@ function showDetails(it){
   $('#modal').classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  // Popunder once per session, on first real action
   triggerPopunderOnce();
-
-  // Track continue
   pushContinue({ id: it.id, type: it.type, title: it.title, poster: it.poster_path || '' });
 }
 async function showById(id, type){
-  const d = await fx(`/${type}/${id}`);
+  const d = await fxProxy(`/${type}/${id}`);
   const it = toItem(d, type);
   showDetails(it);
 }
@@ -169,18 +160,13 @@ function pushContinue(rec){
   displayContinue();
 }
 
-/* ===== Search ===== */
+/* ===== Search (uses proxy function) ===== */
 async function doSearch(q){
   if (!q.trim()){ $('#search-results').innerHTML = ''; return; }
   try{
     if (lastSearchAbort) lastSearchAbort.abort();
     lastSearchAbort = new AbortController();
-    const url = new URL(BASE_URL + '/search/multi');
-    url.searchParams.set('api_key', API_KEY);
-    url.searchParams.set('language', 'en-US');
-    url.searchParams.set('query', q);
-    url.searchParams.set('page', '1');
-    const res = await fetch(url, {signal: lastSearchAbort.signal});
+    const res = await fetch(`/api/tmdb-proxy?mode=search&query=${encodeURIComponent(q)}`, { signal: lastSearchAbort.signal });
     const data = await res.json();
     const container = $('#search-results');
     container.innerHTML = '';
@@ -228,13 +214,11 @@ function toggleTheme(){
 /* ===== Ads: Popunder + Native (cooldown + daily cap) ===== */
 function dayStr(){ return new Date().toISOString().slice(0,10); }
 
-// Popunder once per session
 function triggerPopunderOnce(){
   if (sessionStorage.getItem('__pu_done')==='1') return;
   if (typeof window._pu === 'function'){ window._pu(); sessionStorage.setItem('__pu_done','1'); }
 }
 
-// Native caps
 (function(){
   const CAP_KEY = '__native_cap';
   function get(){ try{return JSON.parse(localStorage.getItem(CAP_KEY))||{day:dayStr(),count:0,last:0};}catch{return {day:dayStr(),count:0,last:0};} }
@@ -252,7 +236,6 @@ function triggerPopunderOnce(){
   };
 })();
 
-// Native placement logic (inline desktop, sticky mobile)
 (function(){
   const nativeInline = $('#native-inline');
   const nativeSticky = $('#native-sticky');
@@ -291,7 +274,7 @@ function triggerPopunderOnce(){
   };
 
   function initNative(){
-    if (!window.__nativeCap?.can(120000,4)) return; // 2 min cooldown, 4/day
+    if (!window.__nativeCap?.can(120000,4)) return;
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"") ||
                      (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
 
@@ -340,14 +323,12 @@ async function init(){
   });
   qClear.addEventListener('click', ()=>{ q.value=''; qClear.style.display='none'; closeSearch(); });
 
-  // Search modal input
   $('#search-input').addEventListener('input', e=>{
     const v=e.target.value.trim(); clearTimeout(searchTimer);
     if (v) searchTimer=setTimeout(()=>doSearch(v), 350);
     else $('#search-results').innerHTML='';
   });
 
-  // Load rows
   const [moviesRaw, tvRaw, animeRaw] = await Promise.all([
     fetchTrending('movie'),
     fetchTrending('tv'),
@@ -358,7 +339,6 @@ async function init(){
   const tvs    = tvRaw.map(r=>toItem(r,'tv')).filter(x=>x.poster);
   const anime  = animeRaw.map(r=>toItem(r,'tv')).filter(x=>x.poster);
 
-  // Banner from movies
   if (movies.length){
     const pick = movies[Math.floor(Math.random()*movies.length)];
     setBanner(pick);
@@ -371,14 +351,12 @@ async function init(){
 
   hideLoaderSoon();
 
-  // Light periodic refresh every 3 hours
   setInterval(async ()=>{
     const [mR, tR] = await Promise.all([fetchTrending('movie'), fetchTrending('tv')]);
     displayList(mR.map(r=>toItem(r,'movie')).filter(x=>x.poster), 'movies-list');
     displayList(tR.map(r=>toItem(r,'tv')).filter(x=>x.poster), 'tvshows-list');
   }, 3*60*60*1000);
 
-  // PWA SW (optional)
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
   }
@@ -389,5 +367,20 @@ function closeSearch(){
   $('#search-results').innerHTML = '';
 }
 
-/* Run */
 window.addEventListener('load', init);
+
+/* ===== Helper ===== */
+function toItem(raw, typeGuess){
+  const isTV = (typeGuess ? typeGuess==='tv' : raw.media_type==='tv');
+  return {
+    id: raw.id,
+    type: isTV ? 'tv' : 'movie',
+    title: isTV ? (raw.name || raw.title) : (raw.title || raw.name),
+    overview: raw.overview || '',
+    poster: raw.poster_path ? (IMG_WPOST + raw.poster_path) : '',
+    poster_path: raw.poster_path || '',
+    backdrop: raw.backdrop_path ? (IMG_WBACK + raw.backdrop_path) : '',
+    rating: raw.vote_average ? raw.vote_average.toFixed(1) : '—',
+    year: isTV ? (raw.first_air_date||'').slice(0,4) : (raw.release_date||'').slice(0,4)
+  };
+}

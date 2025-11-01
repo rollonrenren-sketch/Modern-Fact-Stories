@@ -2,7 +2,7 @@
 // Secure TMDb API Proxy using Cloudflare Environment Variables
 
 export async function onRequest(context) {
-  const { request, env } = context;  // env gives access to environment variables
+  const { request, env } = context;
   const url = new URL(request.url);
   
   // Handle CORS preflight
@@ -19,7 +19,7 @@ export async function onRequest(context) {
   // Get endpoint from URL parameter
   const endpoint = url.searchParams.get('endpoint');
   
-  // ✅ Get API key from SECURE environment variable
+  // Get API key from SECURE environment variable
   const apiKey = env.TMDB_API_KEY;
   
   // Validate parameters
@@ -54,14 +54,14 @@ export async function onRequest(context) {
     tmdbUrl.searchParams.append('api_key', apiKey);
     tmdbUrl.searchParams.append('language', 'en-US');
     
-    // Copy other query parameters (page, query, etc.)
+    // Copy other query parameters
     for (const [key, value] of url.searchParams) {
       if (key !== 'endpoint' && key !== 'api_key') {
         tmdbUrl.searchParams.append(key, value);
       }
     }
 
-    console.log('🔒 Secure fetch from TMDb');
+    console.log('Secure fetch from TMDb');
 
     // Fetch from TMDb API
     const response = await fetch(tmdbUrl.toString());
@@ -72,4 +72,29 @@ export async function onRequest(context) {
     
     const data = await response.json();
 
-    // Return
+    // Return with CORS headers
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Cache-Control': 'public, max-age=3600',
+      }
+    });
+
+  } catch (error) {
+    console.error('Proxy error:', error);
+    
+    return new Response(JSON.stringify({ 
+      error: 'Proxy failed',
+      message: error.message
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      }
+    });
+  }
+}

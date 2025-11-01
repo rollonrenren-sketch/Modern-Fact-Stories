@@ -359,13 +359,48 @@ let pageTrending=1, fetching=false, lastQuery=null, lastGenre='', lastSort='popu
 /* ---------- Utilities ---------- */
 function qs(obj){return new URLSearchParams(obj).toString();}
 async function fx(path, params={}, {retries=1, timeout=9000}={}){
-  const url=new URL(BASE+path);
-  url.searchParams.set('api_key',API); url.searchParams.set('language','en-US');
-  Object.entries(params).forEach(([k,v])=>v!=null&&url.searchParams.set(k,v));
-  for(let a=0;a<=retries;a++){
-    const c=new AbortController(); const t=setTimeout(()=>c.abort(),timeout);
-    try{ const res=await fetch(url,{signal:c.signal}); clearTimeout(t); if(!res.ok) throw new Error(res.status); return await res.json(); }
-    catch(e){ clearTimeout(t); if(a===retries) return {results:[]}; await new Promise(r=>setTimeout(r,300*(a+1))); }
+  try {
+    // Use Cloudflare proxy instead of direct TMDb call
+    const proxyUrl = new URL('/api/tmdb', window.location.origin);
+    
+    // Add endpoint and API key
+    proxyUrl.searchParams.append('endpoint', path);
+    proxyUrl.searchParams.append('api_key', API);
+    
+    // Add other parameters
+    Object.keys(params).forEach(k => proxyUrl.searchParams.append(k, params[k]));
+
+    console.log('🔄 Proxy:', proxyUrl.toString());
+
+    // Fetch with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    const response = await fetch(proxyUrl.toString(), {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Data:', data);
+    return data;
+
+  } catch (error) {
+    console.error('❌ Error:', error);
+    
+    // Retry logic
+    if (retries > 0) {
+      console.log(`⚠️ Retrying... (${retries} left)`);
+      await new Promise(r => setTimeout(r, 1000));
+      return fx(path, params, {retries: retries - 1, timeout});
+    }
+    
+    return { results: [] };
   }
 }
 function toItem(raw, forceType){

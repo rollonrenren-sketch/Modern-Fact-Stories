@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
   <title>Modern Fact Stories - Professional Streaming Platform</title>
   <link rel="icon" type="image/jpeg" href="logo.jpg" />
@@ -44,9 +41,7 @@
   <link rel="dns-prefetch" href="//idolinflectiongentlemen.com">
   <link rel="preconnect" href="https://idolinflectiongentlemen.com" crossorigin>
 
-  <!-- (Optional) Set CSP via Cloudflare headers, not meta, to avoid blocking vendor scripts. -->
-
-  <!-- (Optional) Analytics (Plausible/GA). Replace domain as needed. -->
+  <!-- (Optional) Analytics -->
   <script defer data-domain="your-domain.example" src="https://plausible.io/js/script.js"></script>
   <script>function track(ev, data){ try{ window.plausible?.(ev,{props:data}); }catch{} }</script>
 
@@ -185,9 +180,9 @@
 
     /* Skeleton card */
     .skeleton{border-radius:14px;overflow:hidden;background:var(--card-bg);box-shadow:var(--shadow-sm)}
-    .skeleton .sk-poster{aspect-ratio:2/3;background:linear-gradient(90deg,#2a2a2a20, #2a2a2a40, #2a2a2a20);animation:shimmer 1.3s infinite}
+    .skeleton .sk-poster{aspect-ratio:2/3;background:linear-gradient(90deg,#2a2a2a20, #2a2a2a40, #2a2a2a20);animation:shimmer 1.3s infinite;background-size:200px 100%}
     .skeleton .sk-text{height:46px;padding:10px}
-    .skeleton .sk-bar{height:10px;border-radius:6px;background:linear-gradient(90deg,#2a2a2a20, #2a2a2a40, #2a2a2a20);animation:shimmer 1.3s infinite}
+    .skeleton .sk-bar{height:10px;border-radius:6px;background:linear-gradient(90deg,#2a2a2a20, #2a2a2a40, #2a2a2a20);animation:shimmer 1.3s infinite;background-size:200px 100%}
     @keyframes shimmer {0%{background-position:-200px 0}100%{background-position:200px 0}}
     @media (prefers-reduced-motion:reduce){.skeleton .sk-poster,.skeleton .sk-bar{animation:none}}
 
@@ -249,6 +244,60 @@
       *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
     }
   </style>
+
+  <!-- ====== TWEAK PACK: smaller top-right control + light animations ====== -->
+  <style id="mfs-tweaks">
+    /* Make the top-right control (heart) smaller & tidy */
+    .movie-card .action-btn{
+      width:30px;height:30px;font-size:14px;opacity:.9;
+    }
+    /* Slimmer quality badge */
+    .movie-card .quality-badge{
+      padding:3px 8px;font-size:9px;border-radius:999px;
+    }
+    /* Gentle poster overlay for text legibility */
+    .poster-wrap::after{
+      content:"";position:absolute;inset:0;
+      background:linear-gradient(to top, rgba(0,0,0,.0) 60%, rgba(0,0,0,.35) 100%);
+      pointer-events:none;
+    }
+    /* Global smoothness */
+    html{ scroll-behavior:smooth; }
+    .movie-card{ will-change: transform, box-shadow; }
+    .hero-inner{ will-change: box-shadow, transform; }
+
+    /* Reveal-on-scroll (lightweight) */
+    .reveal{ opacity:0; transform:translateY(8px); transition:opacity .45s ease, transform .45s ease; }
+    .reveal.in{ opacity:1; transform:none; }
+
+    /* Subtle ambient glow on hero (box-shadow only) */
+    @keyframes ambientGlow{
+      0%{ box-shadow: var(--shadow-lg); }
+      50%{ box-shadow: 0 10px 48px rgba(229,9,20,.18), 0 4px 22px rgba(0,0,0,.2); }
+      100%{ box-shadow: var(--shadow-lg); }
+    }
+    .hero .hero-inner{ animation: ambientGlow 8s ease-in-out infinite; }
+
+    /* Keep hover lift smooth */
+    .movie-card:hover{ transform:translateY(-5px); }
+
+    /* Mobile fine-tune */
+    @media (max-width:768px){
+      .movie-card .action-btn{ width:26px;height:26px;font-size:12px; }
+      .movie-card .quality-badge{ font-size:8.5px; padding:2px 7px; }
+    }
+
+    /* Optional: slightly narrower cards on very wide screens
+       (uncomment if you want more columns / smaller posters)
+    @media (min-width:1400px){ :root{ --card-min: 260px; } }
+    */
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion:reduce){
+      .hero .hero-inner{ animation:none!important; }
+      .reveal{ transition:none!important; opacity:1!important; transform:none!important; }
+    }
+  </style>
 </head>
 <body>
   <!-- Loading -->
@@ -299,7 +348,7 @@
     </div>
   </section>
 
-  <!-- RESUME (boosts retention & viewability) -->
+  <!-- RESUME -->
   <section class="section" id="resume-section" style="display:none;">
     <div class="section-header">
       <div class="section-title">⏭️ Continue where you left off</div>
@@ -534,7 +583,7 @@
 
   function createMovieCard(movie){
     const card = document.createElement('div');
-    card.className = 'movie-card';
+    card.className = 'movie-card reveal';
     card.onclick = () => openModal(movie.id, movie.type);
 
     const isFavorite = favorites.some(f => f.id === movie.id && f.type === movie.type);
@@ -564,6 +613,7 @@
         ${progress > 0 ? `<div class="movie-progress"><div class="movie-progress-bar" style="width:${progress}%"></div></div>` : ''}
       </div>
     `;
+    // reveal observed later
     return card;
   }
 
@@ -596,6 +646,7 @@
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
     movies.forEach(movie => grid.appendChild(createMovieCard(movie)));
+    // reveal will be handled by the observer below
   }
 
   async function loadTrending(){
@@ -648,7 +699,7 @@
     sec.style.display='block';
     const poster = hist.posterPath ? `https://image.tmdb.org/t/p/w500${hist.posterPath}` : 'https://via.placeholder.com/600x900?text=Resume';
     wrap.innerHTML = `
-      <div class="movie-card" style="max-width:420px" onclick="openModal(${hist.id}, '${hist.type}')">
+      <div class="movie-card reveal" style="max-width:420px" onclick="openModal(${hist.id}, '${hist.type}')">
         <div class="poster-wrap"><img class="movie-poster" src="${poster}" alt="${hist.title||'Resume'}" loading="lazy"></div>
         <div class="movie-info"><div class="movie-title">${hist.title}</div></div>
       </div>`;
@@ -1032,7 +1083,47 @@
     window.addEventListener('load', initNative);
   })();
   </script>
-  <!-- ─────────────────────────────  END NATIVE  ───────────────────────────── -->
+
+  <!-- ===== Light reveal/animation helper (GPU-friendly) ===== -->
+  <script id="mfs-anim">
+    (function(){
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const toReveal = [];
+      // queue existing cards/titles
+      document.querySelectorAll('.movie-card, .section-title').forEach(el=>{
+        el.classList.add('reveal'); toReveal.push(el);
+      });
+
+      // Observe new cards added later (e.g., after TMDb fetch)
+      const gridObserver = new MutationObserver(muts=>{
+        muts.forEach(m=>{
+          m.addedNodes.forEach(n=>{
+            if (n && n.nodeType===1 && n.classList.contains('movie-card')){
+              n.classList.add('reveal'); io.observe(n);
+            }
+          });
+        });
+      });
+      ['#trendingGrid','#popularGrid','#recommendedGrid','#searchGrid','#continueGrid','#favoritesGrid']
+        .forEach(sel=>{
+          const grid=document.querySelector(sel);
+          if (grid) gridObserver.observe(grid,{childList:true});
+        });
+
+      // IntersectionObserver for reveal
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if(e.isIntersecting){
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      },{ rootMargin: '0px 0px -10% 0px', threshold: 0.01 });
+
+      toReveal.forEach(el=> io.observe(el));
+    })();
+  </script>
 
   <!-- QUICK NOTES:
        - Create /manifest.webmanifest with:

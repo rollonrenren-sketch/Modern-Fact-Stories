@@ -360,7 +360,7 @@ let pageTrending=1, fetching=false, lastQuery=null, lastGenre='', lastSort='popu
 function qs(obj){return new URLSearchParams(obj).toString();}
 async function fx(path, params={}, {retries=1, timeout=9000}={}){
   const url=new URL(BASE+path);
-  url.searchParams.set('api_key',API); url.searchParams.set('language','en-US');
+  url.searchParams.set('language','en-US');
   Object.entries(params).forEach(([k,v])=>v!=null&&url.searchParams.set(k,v));
   for(let a=0;a<=retries;a++){
     const c=new AbortController(); const t=setTimeout(()=>c.abort(),timeout);
@@ -766,3 +766,4 @@ window.addEventListener('load', init);
 </script>
 </body>
 </html>
+

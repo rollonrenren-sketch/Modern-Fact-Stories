@@ -10,10 +10,45 @@
   <title>Modern Fact Stories - Professional Streaming Platform</title>
   <link rel="icon" type="image/jpeg" href="logo.jpg" />
 
+  <!-- Canonical + SEO -->
+  <link rel="canonical" href="https://your-domain.example/" />
+  <meta name="description" content="Watch trending movies and series. Fast player, clean UI, instant search." />
+  <meta property="og:title" content="Modern Fact Stories" />
+  <meta property="og:description" content="Trending movies & series. Fast player, instant search, resume where you left off." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://your-domain.example/" />
+  <meta property="og:image" content="https://your-domain.example/logo.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebSite",
+    "name":"Modern Fact Stories",
+    "url":"https://your-domain.example/",
+    "potentialAction":{
+      "@type":"SearchAction",
+      "target":"https://your-domain.example/?q={search_term_string}",
+      "query-input":"required name=search_term_string"
+    }
+  }
+  </script>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.webmanifest">
+
   <!-- Performance hints -->
   <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link rel="dns-prefetch" href="//idolinflectiongentlemen.com">
+  <link rel="preconnect" href="https://idolinflectiongentlemen.com" crossorigin>
+
+  <!-- (Optional) Set CSP via Cloudflare headers, not meta, to avoid blocking vendor scripts. -->
+
+  <!-- (Optional) Analytics (Plausible/GA). Replace domain as needed. -->
+  <script defer data-domain="your-domain.example" src="https://plausible.io/js/script.js"></script>
+  <script>function track(ev, data){ try{ window.plausible?.(ev,{props:data}); }catch{} }</script>
 
   <style>
     /* ─────────── CSS RESET (light) ─────────── */
@@ -227,7 +262,7 @@
   <nav class="navbar" role="navigation" aria-label="Primary">
     <div class="navbar-left">
       <a class="logo" href="#" aria-label="Go to home">
-        <img src="logo.jpg" alt="MFS Logo" class="logo-img" />
+        <img src="logo.jpg" alt="MFS Logo" class="logo-img" decoding="async" fetchpriority="high" />
         <span class="logo-text">MODERN FACT STORIES</span>
       </a>
       <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span></button>
@@ -262,6 +297,14 @@
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- RESUME (boosts retention & viewability) -->
+  <section class="section" id="resume-section" style="display:none;">
+    <div class="section-header">
+      <div class="section-title">⏭️ Continue where you left off</div>
+    </div>
+    <div id="resumeCardWrap"></div>
   </section>
 
   <!-- SEARCH RESULTS -->
@@ -377,7 +420,7 @@
     <p style="text-align: center; color: var(--text-muted);">&copy; 2025 Modern Fact Stories. Powered by TMDb API.</p>
   </footer>
 
-  <!-- ───────────────────── POPUNDER (your new code) ───────────────────── -->
+  <!-- ───────────────────── POPUNDER (vendor code) ───────────────────── -->
   <script type="text/javascript" data-cfasync="false" src="//idolinflectiongentlemen.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js"></script>
 
   <!-- Main App (deferred for faster paint) -->
@@ -483,6 +526,7 @@
       description: item.overview || 'No description available.',
       poster: item.poster_path ? `${TMDB_IMAGE_BASE}/w500${item.poster_path}` : '',
       backdrop: item.backdrop_path ? `${TMDB_IMAGE_BASE}/original${item.backdrop_path}` : '',
+      poster_path: item.poster_path || '',
       quality: item.vote_average >= 8 ? '4K' : 'HD',
       type: isTV ? 'tv' : 'movie'
     };
@@ -595,14 +639,33 @@
     }
   }
 
+  // Resume section render
+  function renderResume(){
+    const wrap=document.getElementById('resumeCardWrap');
+    const sec=document.getElementById('resume-section');
+    const hist = (watchHistory||[])[0];
+    if (!hist){ sec.style.display='none'; return; }
+    sec.style.display='block';
+    const poster = hist.posterPath ? `https://image.tmdb.org/t/p/w500${hist.posterPath}` : 'https://via.placeholder.com/600x900?text=Resume';
+    wrap.innerHTML = `
+      <div class="movie-card" style="max-width:420px" onclick="openModal(${hist.id}, '${hist.type}')">
+        <div class="poster-wrap"><img class="movie-poster" src="${poster}" alt="${hist.title||'Resume'}" loading="lazy"></div>
+        <div class="movie-info"><div class="movie-title">${hist.title}</div></div>
+      </div>`;
+  }
+
   async function openModal(id, type){
-    // POPUNDER trigger (smart: requires vendor exposing _pu)
+    // POPUNDER trigger if vendor exposes _pu()
     if (typeof window._pu === 'function') { window._pu(); }
+    track('open_modal', {id, type});
 
     const data = await fetchTMDb(`/${type}/${id}`);
     currentMovie = {
-      id: data.id, title: type === 'tv' ? data.name : data.title,
-      description: data.overview || 'No description.', type
+      id: data.id,
+      title: type === 'tv' ? data.name : data.title,
+      description: data.overview || 'No description.',
+      type,
+      posterPath: data.poster_path || ''
     };
 
     document.getElementById('modalTitle').textContent = currentMovie.title;
@@ -613,7 +676,7 @@
     document.getElementById('movieModal').classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    addToWatchHistory(id, type, currentMovie.title);
+    addToWatchHistory(id, type, currentMovie.title, currentMovie.posterPath);
     updateContinueWatching(id, type, 10, currentMovie.title);
   }
 
@@ -657,12 +720,13 @@
     loadFavorites();
   }
 
-  function addToWatchHistory(id, type, title){
+  function addToWatchHistory(id, type, title, posterPath){
     const i = watchHistory.findIndex(w => w.id === id && w.type === type);
     if (i>-1) watchHistory.splice(i,1);
-    watchHistory.unshift({id, type, title, timestamp: Date.now()});
+    watchHistory.unshift({id, type, title, posterPath: posterPath||'', timestamp: Date.now()});
     if (watchHistory.length > 50) watchHistory = watchHistory.slice(0,50);
     safeStorage.set('watchHistory', watchHistory);
+    renderResume();
     loadRecommended();
   }
 
@@ -718,6 +782,7 @@
         const data = await res.json();
         const results = (data.results||[]).filter(i => i.media_type==='movie' || i.media_type==='tv');
         const movies = results.map(item => convertMovie(item, item.media_type === 'tv'));
+        track('search', {q});
         if (movies.length) loadMovieGrid('searchGrid', movies);
         else showNoResults(q);
       }catch(err){
@@ -785,14 +850,21 @@
 
     // little idle delay so images settle
     requestIdleCallback(()=>{ loader.classList.add('hidden'); clearTimeout(loaderFailSafe); }, {timeout: 1000});
+
+    // Render resume CTA
+    renderResume();
   }
   window.addEventListener('load', init);
+
+  // PWA SW registration
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', ()=> {
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    });
+  }
   </script>
 
-  <!-- ─────────────────────  NATIVE BANNER (your new code)  ─────────────────────
-       Strategy: load vendor script once, and dynamically assign the single required
-       container ID to whichever placement is visible (inline on desktop, sticky on mobile)
-  -->
+  <!-- ─────────────────────  NATIVE BANNER (vendor + logic)  ───────────────────── -->
   <style>
     /* Inline native (desktop/tablet) */
     .native-inline-wrap{max-width:1100px;margin:24px auto;padding:0 var(--container-pad);display:none}
@@ -844,14 +916,34 @@
     </div>
   </div>
 
-  <!-- Load your vendor script ONCE, and give it a live container id where needed -->
+  <!-- Load vendor ONCE -->
   <script async data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>
+
+  <!-- Caps + native init -->
   <script>
+  // Simple caps & cooldown for native
+  (function(){
+    const CAP_KEY="mfs_native_cap";
+    const DAY=()=>new Date().toISOString().slice(0,10);
+    function get(){ try{return JSON.parse(localStorage.getItem(CAP_KEY))||{day:DAY(),count:0,last:0}; }catch{return {day:DAY(),count:0,last:0};}}
+    function set(v){ try{localStorage.setItem(CAP_KEY,JSON.stringify(v));}catch{} }
+    window.__nativeAdCap = {
+      canShow(cooldownMs=120000, maxPerDay=4){
+        const now=Date.now(); const cap=get();
+        if (cap.day!==DAY()) {cap.day=DAY(); cap.count=0;}
+        if (now-(cap.last||0) < cooldownMs) return false;
+        if ((cap.count||0) >= maxPerDay) return false;
+        return true;
+      },
+      markShown(){ const cap=get(); cap.day=DAY(); cap.count=(cap.count||0)+1; cap.last=Date.now(); set(cap); }
+    };
+  })();
+
   (function(){
     const VENDOR_ID = "container-a4bf814c4146624bf8b42bd02f5c6d3c"; // must exist on exactly one visible element
     const startAt = Date.now();
 
-    // simple UA+pointer check
+    // UA+pointer check
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"") ||
                      (window.matchMedia && window.matchMedia("(pointer:coarse)").matches);
 
@@ -861,7 +953,6 @@
     const mobileSlot   = document.getElementById("mfsp_vendor_slot_mobile");
 
     function assignVendorIdTo(el){
-      // remove id from both, then set on target
       [inlineSlot, mobileSlot].forEach(n => { if (n && n.id === VENDOR_ID) n.id = (n===inlineSlot?"mfsp_vendor_slot_inline":"mfsp_vendor_slot_mobile"); });
       if (el && el.id !== VENDOR_ID) el.id = VENDOR_ID;
     }
@@ -876,6 +967,7 @@
       assignVendorIdTo(inlineSlot);
       inlineAnchor.style.display = "block";
       inlineAnchor.setAttribute('aria-hidden','false');
+      track('native_shown',{placement:'inline'});
     }
 
     function showSticky(){
@@ -885,29 +977,42 @@
       assignVendorIdTo(mobileSlot);
       stickyAnchor.style.display = "block";
       stickyAnchor.setAttribute('aria-hidden','false');
+      track('native_shown',{placement:'sticky'});
     }
 
     // public helpers
     window.__nativeAd = {
       dismiss(where){
-        if (where==='inline'){ inlineAnchor && (inlineAnchor.style.display="none"); inlineAnchor?.setAttribute('aria-hidden','true'); }
-        else { stickyAnchor && (stickyAnchor.style.display="none"); stickyAnchor?.setAttribute('aria-hidden','true'); }
+        if (where==='inline'){
+          if (inlineAnchor){ inlineAnchor.style.display="none"; inlineAnchor.setAttribute('aria-hidden','true'); }
+        } else {
+          if (stickyAnchor){ stickyAnchor.style.display="none"; stickyAnchor.setAttribute('aria-hidden','true'); }
+        }
       },
       cta(){ /* optional: hook for analytics */ }
     };
 
     function initNative(){
-      // small dwell so it doesn't flash instantly
       const dwell = isMobile ? 800 : 600;
       if ((Date.now()-startAt) < dwell) { setTimeout(initNative, 200); return; }
+
+      if (!window.__nativeAdCap?.canShow(120000, 4)) return; // 2min cooldown, 4/day
+
       if (isMobile){
         showSticky();
+        window.__nativeAdCap.markShown();
       } else {
         // show when Popular scrolled into view for nicer integration
         const popular = document.getElementById("popular-section");
-        if (!popular){ showInline(); return; }
+        if (!popular){ showInline(); window.__nativeAdCap.markShown(); return; }
         const io = new IntersectionObserver((entries)=>{
-          entries.forEach(e=>{ if (e.isIntersecting){ showInline(); io.disconnect(); } });
+          entries.forEach(e=>{
+            if (e.isIntersecting){
+              showInline();
+              window.__nativeAdCap.markShown();
+              io.disconnect();
+            }
+          });
         },{ rootMargin:"0px 0px -33% 0px", threshold:0.01 });
         io.observe(popular);
       }
@@ -924,10 +1029,33 @@
       mo.observe(modal, { attributes:true, attributeFilter:["class"] });
     }
 
-    // kick it
     window.addEventListener('load', initNative);
   })();
   </script>
   <!-- ─────────────────────────────  END NATIVE  ───────────────────────────── -->
+
+  <!-- QUICK NOTES:
+       - Create /manifest.webmanifest with:
+         {
+           "name": "Modern Fact Stories",
+           "short_name": "MFS",
+           "start_url": "/",
+           "display": "standalone",
+           "background_color": "#0f0f0f",
+           "theme_color": "#0f0f0f",
+           "icons": [
+             {"src": "/logo.jpg","sizes": "192x192","type":"image/jpeg"},
+             {"src": "/logo.jpg","sizes": "512x512","type":"image/jpeg"}
+           ]
+         }
+       - Create /sw.js with:
+         self.addEventListener('install', e=>{
+           e.waitUntil(caches.open('mfs-v1').then(c=>c.addAll(['/', '/logo.jpg'])));
+         });
+         self.addEventListener('fetch', e=>{
+           e.respondWith(caches.match(e.request).then(r=> r || fetch(e.request)));
+         });
+       - Set CSP via Cloudflare response headers (not meta) and whitelist required domains.
+  -->
 </body>
 </html>

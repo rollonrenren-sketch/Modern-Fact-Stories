@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Fact Stories - Professional Streaming Platform</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
     <style>
         .loading-screen {
           position: fixed;
@@ -27,6 +28,8 @@
           height: 120px;
           margin-bottom: 30px;
           animation: pulse 1.5s ease-in-out infinite;
+          border-radius: 50%;
+          box-shadow: 0 0 30px rgba(229, 9, 20, 0.5);
         }
 
         @keyframes pulse {
@@ -148,8 +151,14 @@
         .logo-img {
           width: 45px;
           height: 45px;
-          border-radius: 8px;
+          border-radius: 50%;
           object-fit: cover;
+          box-shadow: 0 2px 8px rgba(229, 9, 20, 0.3);
+          transition: transform 0.3s;
+        }
+
+        .logo-img:hover {
+          transform: scale(1.1) rotate(5deg);
         }
 
         .logo-text {
@@ -561,7 +570,9 @@
           padding: 60px 40px 30px;
           margin-top: 80px;
           border-top: 1px solid var(--border-color);
-        }          @media (max-width: 768px) {
+        }
+
+        @media (max-width: 768px) {
           .navbar {
             flex-direction: column;
             padding: 15px 20px;
@@ -618,7 +629,7 @@
 </head>
 <body>
     <div class="loading-screen" id="loadingScreen">
-        <img src="https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/139041506/8efc9fa0-e607-4077-9567-9dc5d1ed18f2/logo.jpg" alt="Logo" class="loading-logo">
+        <img src="logo.jpg" alt="Modern Fact Stories Logo" class="loading-logo">
         <div class="loading-spinner"></div>
         <p class="loading-text">Loading Modern Fact Stories...</p>
     </div>
@@ -626,7 +637,7 @@
     <nav class="navbar">
         <div class="navbar-left">
             <div class="logo">
-                <img src="https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/139041506/8efc9fa0-e607-4077-9567-9dc5d1ed18f2/logo.jpg" alt="MFS Logo" class="logo-img">
+                <img src="logo.jpg" alt="MFS Logo" class="logo-img">
                 <span class="logo-text">MODERN FACT STORIES</span>
             </div>
             <div class="nav-links">
@@ -941,7 +952,6 @@
             const iframe = document.getElementById('videoPlayer');
             iframe.src = embedUrl;
             
-            // Block popups and redirects
             iframe.onload = () => {
                 try {
                     iframe.contentWindow.addEventListener('beforeunload', (e) => {
@@ -1069,7 +1079,6 @@
             }
         });
 
-        // Prevent right-click and shortcuts
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u')) {
@@ -1078,7 +1087,6 @@
             }
         });
 
-        // Block popups globally
         window.open = function() { return null; };
 
         async function init() {

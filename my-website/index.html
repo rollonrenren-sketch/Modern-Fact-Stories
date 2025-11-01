@@ -7,16 +7,15 @@
 <title>Modern Fact Stories — Movies & Series</title>
 <link rel="icon" href="logo.jpg">
 
-<!-- Basic SEO -->
+<!-- Canonical/SEO -->
 <link rel="canonical" href="https://your-domain.example/">
-<meta name="description" content="Watch trending movies and series. Fast player, clean UI, instant search, trailers, resume watching, and My List.">
+<meta name="description" content="Watch trending movies and series. Fast player, clean UI, instant search, trailers, and resume watching.">
 <meta property="og:title" content="Modern Fact Stories">
 <meta property="og:description" content="Trending movies & series with trailers, search, and resume watching.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://your-domain.example/logo.jpg">
 
 <!-- Perf hints -->
-<link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
 <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
 <link rel="dns-prefetch" href="//idolinflectiongentlemen.com">
 <link rel="preconnect" href="https://idolinflectiongentlemen.com" crossorigin>
@@ -119,13 +118,11 @@ main{padding:0 var(--pad)}
 .stars{color:var(--gold);margin:6px 0 10px}
 .tagset{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .tag{font-size:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:6px 10px}
-.row-ctl{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;align-items:center}
+.row-ctl{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .btn.sm{padding:8px 12px;border-radius:10px}
 select, .sel{background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .video{margin-top:12px}
 .video iframe{width:100%;height:420px;border:0;background:#000;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.35)}
-.ctrls{display:flex;gap:8px;flex-wrap:wrap}
-.auto-chip{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--muted)}
 
 /* trailer modal */
 .trailer-modal .dialog{max-width:860px}
@@ -222,7 +219,6 @@ footer a{color:var(--accent)} footer a:hover{color:#fff}
 </section>
 
 <main>
-  <!-- Sections auto-filled -->
   <section class="section" id="secTrending"><h2>🔥 Trending</h2><div class="grid" id="gridTrending"></div></section>
   <section class="section" id="secTopRated"><h2>⭐ Top Rated</h2><div class="grid" id="gridTopRated"></div></section>
   <section class="section" id="secUpcoming"><h2>📅 Upcoming / Now Playing</h2><div class="grid" id="gridUpcoming"></div></section>
@@ -236,6 +232,7 @@ footer a{color:var(--accent)} footer a:hover{color:#fff}
         <button class="native-close" onclick="window.__nativeAd?.dismiss('inline')" aria-label="Close">✕</button>
       </div>
       <div class="native-body">
+        <!-- Vendor will take over this container -->
         <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
       </div>
     </div>
@@ -273,7 +270,7 @@ footer a{color:var(--accent)} footer a:hover{color:#fff}
           <select id="episodeSel" class="sel"></select>
         </div>
 
-        <div class="row-ctl ctrls">
+        <div class="row-ctl">
           <label>Server:</label>
           <select id="serverSel" class="sel">
             <option value="vidsrc.cc">VidSrc.cc</option>
@@ -283,12 +280,6 @@ footer a{color:var(--accent)} footer a:hover{color:#fff}
           <button class="btn sm primary" id="btnPlay">▶️ Play</button>
           <button class="btn sm" id="btnTrailer">🎬 Trailer</button>
           <button class="btn sm" id="btnFav">❤️ Add to List</button>
-          <span class="auto-chip"><input id="autoPlayToggle" type="checkbox"> Autoplay on open</span>
-        </div>
-
-        <div class="row-ctl ctrls">
-          <button class="btn sm" id="btnPiP">📺 PiP</button>
-          <button class="btn sm" id="btnFS">⛶ Fullscreen</button>
         </div>
 
         <div class="video"><iframe id="player" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer"></iframe></div>
@@ -338,36 +329,63 @@ footer a{color:var(--accent)} footer a:hover{color:#fff}
 
 <script>
 /* ================== APP ================== */
-const API='f27081ffd1178848ff5106836b2adc93';
-const BASE='https://api.themoviedb.org/3';
-const IMG_BACK='https://image.tmdb.org/t/p/w1280';
-const IMG_POST='https://image.tmdb.org/t/p/w500';
+/* --- PROXY FIRST (keeps your TMDb key server-side), fallback to direct if proxy missing --- */
+const PROXY_BASE = '/api/tmdb';                 // Cloudflare Worker / Vercel route (see below)
+const TMDB_BASE  = 'https://api.themoviedb.org/3'; // only used as fallback
+const IMG_BACK   = 'https://image.tmdb.org/t/p/w1280';
+const IMG_POST   = 'https://image.tmdb.org/t/p/w500';
+const FALLBACK_NOIMG = 'https://via.placeholder.com/600x900?text=No+Image';
+
+/* Your real TMDb key is never embedded in the client.
+   It lives in the proxy (env var). Fallback key used ONLY if proxy is unavailable. */
+const _FALLBACK_PUBLIC_KEY = 'f27081ffd1178848ff5106836b2adc93';
 
 const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
 window.requestIdleCallback ||= (cb)=>setTimeout(()=>cb({timeRemaining:()=>0,didTimeout:true}),1);
-
 const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch{return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 
 let currentKind='movie';   // movie | tv | anime | favorites | continue
 let hero=null, selected=null;
 let favorites=store.get('favorites',[]);
 let resume=store.get('resume',[]);
-let autoPlay = store.get('autoPlay', false); // DEFAULT OFF
+let autoPlay = JSON.parse(localStorage.getItem('autoPlay')||'false');
 
 let pageTrending=1, fetching=false, lastQuery=null, lastGenre='', lastSort='popularity.desc', lastYear='';
 
-/* ---------- Utilities ---------- */
-function qs(obj){return new URLSearchParams(obj).toString();}
+/* ---------- Fetch wrapper via proxy ---------- */
 async function fx(path, params={}, {retries=1, timeout=9000}={}){
-  const url=new URL(BASE+path);
-  url.searchParams.set('api_key',API); url.searchParams.set('language','en-US');
-  Object.entries(params).forEach(([k,v])=>v!=null&&url.searchParams.set(k,v));
+  // Try proxy
+  const proxyURL = new URL(PROXY_BASE, location.origin);
+  proxyURL.searchParams.set('path', path);
+  proxyURL.searchParams.set('params', new URLSearchParams(params).toString());
   for(let a=0;a<=retries;a++){
     const c=new AbortController(); const t=setTimeout(()=>c.abort(),timeout);
-    try{ const res=await fetch(url,{signal:c.signal}); clearTimeout(t); if(!res.ok) throw new Error(res.status); return await res.json(); }
-    catch(e){ clearTimeout(t); if(a===retries) return {results:[]}; await new Promise(r=>setTimeout(r,300*(a+1))); }
+    try{
+      const res=await fetch(proxyURL.toString(),{signal:c.signal});
+      clearTimeout(t);
+      if(res.ok) return await res.json();
+      // If proxy returns 4xx/5xx, break to fallback
+      break;
+    }catch(e){ clearTimeout(t); if(a===retries) break; await new Promise(r=>setTimeout(r,300*(a+1))); }
+  }
+  // Fallback to direct (only if proxy missing)
+  const direct=new URL(TMDB_BASE+path);
+  direct.searchParams.set('api_key',_FALLBACK_PUBLIC_KEY);
+  direct.searchParams.set('language','en-US');
+  Object.entries(params).forEach(([k,v])=>v!=null&&direct.searchParams.set(k,v));
+  for(let a=0;a<=retries;a++){
+    const c=new AbortController(); const t=setTimeout(()=>c.abort(),timeout);
+    try{
+      const res=await fetch(direct.toString(),{signal:c.signal});
+      clearTimeout(t);
+      if(!res.ok) throw new Error(res.status);
+      return await res.json();
+    }catch(e){ clearTimeout(t); if(a===retries) return {results:[]}; await new Promise(r=>setTimeout(r,300*(a+1))); }
   }
 }
+
+/* ---------- Helpers ---------- */
+function preloadImage(src){ if(!src) return; const l=document.createElement('link'); l.rel='preload'; l.as='image'; l.href=src; document.head.appendChild(l); }
 function toItem(raw, forceType){
   const type = forceType || raw.media_type || 'movie';
   const isTV = type==='tv';
@@ -401,6 +419,7 @@ function toggleFav(item){
 async function setHeroFrom(items){
   if(!items.length) return;
   hero = items[Math.floor(Math.random()*items.length)];
+  if (hero.backdrop) preloadImage(hero.backdrop);
   $('#heroMedia').style.backgroundImage = hero.backdrop ? `url('${hero.backdrop}')` : '';
   $('#heroTitle').textContent = hero.title || 'Discover Amazing Stories';
   $('#heroDesc').textContent = hero.overview || 'Stream unlimited entertainment';
@@ -413,7 +432,7 @@ function cardEl(item){
   div.innerHTML=`
     <div class="badge-q">${(parseFloat(item.rating)||0)>=8?'4K':'HD'}</div>
     <button class="fav" title="${isFav?'In My List':'Add to My List'}">${isFav?'❤️':'🤍'}</button>
-    <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="${item.poster||'https://via.placeholder.com/600x900?text=No+Image'}" alt="${item.title}">
+    <img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="${item.poster||FALLBACK_NOIMG}" alt="${item.title}">
     <div class="title">${item.title||''}</div>
     <div class="meta"><span>${item.year||''}</span><span>${item.rating==='—'?'':'⭐ '+item.rating}</span></div>
   `;
@@ -428,7 +447,7 @@ async function fillSection(gridId, fetcher, typeForAnime=null){
   const data = await fetcher();
   const items = (data.results||data||[]).map(r=>toItem(r,typeForAnime||r.media_type));
   items.forEach(it=> grid.appendChild(cardEl(it)));
-  if(gridId==='#gridTrending') await setHeroFrom(items);
+  if(gridId==='#gridTrending'){ await setHeroFrom(items); injectItemListJSON('#gridTrending',items,'Trending'); tryInjectNativeBetween(grid,12); }
 }
 
 /* ---------- Fetchers ---------- */
@@ -442,12 +461,12 @@ async function trending(kind='movie', page=1){
   return await fx(`/trending/${kind}/week`,{page});
 }
 async function topRated(kind='movie'){ return await fx(`/${kind}/top_rated`); }
-async function upcomingOrNow(kind='movie'){ return (kind==='movie') ? fx('/movie/now_playing') : fx('/tv/airing_today'); }
+async function upcomingOrNow(kind='movie'){ return kind==='movie' ? fx('/movie/now_playing') : fx('/tv/airing_today'); }
 async function discover(kind, page=1, {genre, sort, year}={}){
   const params={page, sort_by:sort||'popularity.desc', with_genres:genre||'', include_adult:'false'};
   if(kind==='movie'){ if(year) params.primary_release_year=year; return fx('/discover/movie',params); }
   if(kind==='tv'){ if(year) params.first_air_date_year=year; return fx('/discover/tv',params); }
-  const d=await fx('/discover/tv',{...params, with_original_language:'ja', with_genres: (genre||'') ? genre : '16'});
+  const d=await fx('/discover/tv',{...params, with_original_language:'ja', with_genres:(genre||'')?genre:'16'});
   return d;
 }
 async function details(type,id){ return await fx(`/${type}/${id}`); }
@@ -462,9 +481,7 @@ async function appendTrending(){
   const data = await trending(currentKind, pageTrending);
   const items=(data.results||[]).map(r=>toItem(r, currentKind==='anime'?'tv':currentKind));
   items.forEach(it=> grid.appendChild(cardEl(it)));
-  // inject inline native after 12th card (desktop only)
-  tryInjectNativeBetween(grid, 12);
-  if(pageTrending===1) setHeroFrom(items);
+  if(pageTrending===1){ setHeroFrom(items); injectItemListJSON('#gridTrending',items,'Trending'); tryInjectNativeBetween(grid,12); }
   pageTrending++; fetching=false;
 }
 
@@ -477,8 +494,8 @@ async function openDetails(item){
   const inf = await details(item.type,item.id);
   const full = toItem(inf, item.type);
   full.genres = (inf.genres||[]).map(g=>g.name);
-  // poster/overview
-  $('#mPoster').src = full.poster || 'https://via.placeholder.com/600x900?text=No+Image';
+
+  $('#mPoster').src = full.poster || FALLBACK_NOIMG;
   $('#mTitle').textContent = full.title || 'Title';
   $('#mOverview').textContent = full.overview || 'No description available.';
   $('#mRating').textContent = full.rating && full.rating!=='—' ? '★'.repeat(Math.max(1,Math.round(parseFloat(full.rating)/2))) : 'No rating';
@@ -495,46 +512,24 @@ async function openDetails(item){
     selS.onchange = async ()=>{
       selE.innerHTML=''; const ep=await seasonEpisodes(full.id, selS.value);
       (ep.episodes||[]).forEach(e=>{ const o=document.createElement('option'); o.value=e.episode_number; o.textContent='E'+e.episode_number; selE.appendChild(o); });
-      selE.selectedIndex=0; if(autoPlay) setPlayer(true);
+      selE.selectedIndex=0; setPlayer(autoPlay);
     };
     await selS.onchange();
-    selE.onchange = ()=>{ if(autoPlay) setPlayer(true); else setPlayer(false); };
+    selE.onchange = ()=>setPlayer(autoPlay);
   } else {
-    $('#player').src=''; // set on Play button or autoplay toggle
+    $('#player').src='';
   }
 
-  // buttons
   $('#btnFav').textContent = favorites.some(f=>f.id===full.id && f.type===full.type) ? '❤️ In My List' : '❤️ Add to List';
   $('#btnFav').onclick = ()=>{ toggleFav(full); $('#btnFav').textContent = favorites.some(f=>f.id===full.id && f.type===full.type)?'❤️ In My List':'❤️ Add to List'; };
 
-  // autoplay toggle
-  const apT = $('#autoPlayToggle');
-  apT.checked = !!autoPlay;
-  apT.onchange = ()=>{ autoPlay = apT.checked; store.set('autoPlay', autoPlay); };
-
-  $('#btnPlay').onclick = ()=>{ setPlayer(true); triggerPopunderOnce(); pushResume({id:full.id,type:full.type,title:full.title,poster:full.poster_path}); };
+  $('#btnPlay').onclick = ()=>{ setPlayer(true); triggerPopunderOnce(); pushResume({id:full.id,type:full.type,title:full.title,poster:full.poster_path}); if(full.type==='tv') setTimeout(()=>maybeShowUpNext(), 12000); };
   $('#btnTrailer').onclick = async ()=>{
     const v = await videos(full.type, full.id);
     const yt = (v.results||[]).find(x=>x.site==='YouTube' && (x.type==='Trailer'||x.type==='Teaser'));
     if(yt){ $('#trailerFrame').src='https://www.youtube.com/embed/'+yt.key; openModal($('#trailerModal')); triggerPopunderOnce(); }
     else alert('Trailer not available.');
   };
-
-  // PiP & Fullscreen
-  $('#btnPiP').onclick = async ()=>{
-    try{
-      const iframe = $('#player');
-      if (document.pictureInPictureElement) await document.exitPictureInPicture();
-      else await iframe.requestPictureInPicture?.();
-    }catch{ alert('Picture-in-Picture not supported'); }
-  };
-  $('#btnFS').onclick = ()=>{
-    const player = $('#player');
-    if (!document.fullscreenElement) player.requestFullscreen?.(); else document.exitFullscreen?.();
-  };
-
-  // Autoplay on open if enabled
-  if(autoPlay) setPlayer(true);
 
   openModal($('#modal'));
 }
@@ -557,6 +552,28 @@ function setPlayer(autoplay=false){
   $('#player').src = url;
 }
 
+/* ---------- Up Next (nudge for series) ---------- */
+function showUpNext(nextCb){
+  const box = document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.82);z-index:2000';
+  box.innerHTML=`<div style="background:var(--card);padding:22px;border-radius:14px;max-width:420px;text-align:center">
+    <h3>Next episode starts in</h3>
+    <div id="upnextTimer" style="font-size:44px;font-weight:900;color:var(--accent);margin:12px 0">10</div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn primary" id="upnextNow">▶️ Play now</button>
+      <button class="btn" id="upnextCancel">✕ Cancel</button>
+    </div></div>`;
+  document.body.appendChild(box);
+  let t=10, id=setInterval(()=>{ t--; box.querySelector('#upnextTimer').textContent=t; if(t<=0){clearInterval(id); nextCb(); box.remove();}},1000);
+  box.querySelector('#upnextNow').onclick=()=>{ clearInterval(id); nextCb(); box.remove(); };
+  box.querySelector('#upnextCancel').onclick=()=>{ clearInterval(id); box.remove(); };
+}
+function maybeShowUpNext(){
+  if(!selected || selected.type!=='tv') return;
+  const s=parseInt($('#seasonSel').value||'1',10), e=parseInt($('#episodeSel').value||'1',10);
+  showUpNext(()=>{ $('#episodeSel').value = String(e+1); setPlayer(true); });
+}
+
 /* ---------- Search ---------- */
 let searchAbort=null, searchTimer=null;
 async function doSearch(q){
@@ -564,9 +581,7 @@ async function doSearch(q){
   if(searchAbort) searchAbort.abort();
   searchAbort=new AbortController();
   try{
-    const u=new URL(BASE+'/search/multi');
-    u.searchParams.set('api_key',API); u.searchParams.set('language','en-US'); u.searchParams.set('query',q); u.searchParams.set('page','1');
-    const res=await fetch(u,{signal:searchAbort.signal}); const data=await res.json();
+    const data=await fx('/search/multi',{query:q,page:'1'});
     const cont=$('#searchGrid'); cont.innerHTML='';
     (data.results||[]).filter(x=>x.media_type==='movie'||x.media_type==='tv')
       .forEach(r=>{
@@ -577,7 +592,7 @@ async function doSearch(q){
         img.onclick=()=>{ closeModal($('#searchModal')); openDetails(it); };
         cont.appendChild(img);
       });
-  }catch(e){ if(e.name!=='AbortError') $('#searchGrid').innerHTML='<p style="color:#bbb">Search error. Try again.</p>'; }
+  }catch(e){ $('#searchGrid').innerHTML='<p style="color:#bbb">Search error. Try again.</p>'; }
 }
 
 /* ---------- Tabs & Filters ---------- */
@@ -596,8 +611,7 @@ async function loadGenres(kind){
 /* ---------- Ads (Popunder + Native) ---------- */
 function day(){ return new Date().toISOString().slice(0,10); }
 function triggerPopunderOnce(){ if(sessionStorage.getItem('__pu_done')==='1') return; if(typeof window._pu==='function'){ window._pu(); sessionStorage.setItem('__pu_done','1'); } }
-
-// daily cap + 2min cooldown for native
+/* Native frequency cap */
 (function(){
   const KEY='__native_cap';
   function get(){ try{ return JSON.parse(localStorage.getItem(KEY))||{day:day(),count:0,last:0}; }catch{ return {day:day(),count:0,last:0}; } }
@@ -607,65 +621,102 @@ function triggerPopunderOnce(){ if(sessionStorage.getItem('__pu_done')==='1') re
     mark(){ const c=get(); c.day=day(); c.count=(c.count||0)+1; c.last=Date.now(); set(c); }
   };
 })();
-
-// inline/sticky placements with smart timing
-(function(){
-  const inline=$('#nativeInline'); const sticky=$('#nativeSticky'); const vendorId='container-a4bf814c4146624bf8b42bd02f5c6d3c';
-
-  function assign(el){ // ensure only one live ID
-    const exist=document.getElementById(vendorId);
-    if(exist && exist!==el) exist.id='native-recycled';
-    el.id=vendorId;
-  }
+(function(){ // placement & behavior
+  const inline=$('#nativeInline'); const sticky=$('#nativeSticky'); const VENDOR_ID='container-a4bf814c4146624bf8b42bd02f5c6d3c';
+  function assign(el){ const exist=document.getElementById(VENDOR_ID); if(exist&&exist!==el) exist.id='native-recycled'; if(el && el.id!==VENDOR_ID) el.id=VENDOR_ID; }
   function showInline(){ if(!inline) return; inline.style.display='block'; inline.setAttribute('aria-hidden','false'); assign(inline.querySelector('.native-body > div')); }
-  function showSticky(){ if(!sticky) return; sticky.style.display='block'; sticky.setAttribute('aria-hidden','false'); let slot=sticky.querySelector('.slot>#'+vendorId); if(!slot){ const d=document.createElement('div'); sticky.querySelector('.slot').appendChild(d); assign(d); } }
+  function showSticky(){ if(!sticky) return; sticky.style.display='block'; sticky.setAttribute('aria-hidden','false'); let slot=sticky.querySelector('.slot>#'+VENDOR_ID); if(!slot){ const d=document.createElement('div'); sticky.querySelector('.slot').appendChild(d); assign(d); } }
   window.__nativeAd={dismiss:(w)=>{ if(w==='inline'){ inline.style.display='none'; inline.setAttribute('aria-hidden','true'); } else { sticky.style.display='none'; sticky.setAttribute('aria-hidden','true'); }}, cta(){}};
 
   function initNative(){
-    if(!window.__nativeCap.can(120000,4)) return;
+    if(!window.__nativeCap.can(120000,4)) return; // 2min cooldown, 4/day
     const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"")||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
     if(isMobile){ showSticky(); window.__nativeCap.mark(); }
     else{
       const anchor=$('#secTopRated');
       if(!anchor){ showInline(); window.__nativeCap.mark(); return; }
-      const io=new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting){ showInline(); window.__nativeCap.mark(); io.disconnect(); }}); },{rootMargin:'0px 0px -35% 0px',threshold:0.01});
+      const io=new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if(e.isIntersecting){ showInline(); window.__nativeCap.mark(); io.disconnect(); }});
+      },{rootMargin:'0px 0px -35% 0px',threshold:0.01});
       io.observe(anchor);
+      // Second inline later with longer cooldown to improve CTR quality
+      setTimeout(()=>{
+        if (!window.__nativeCap.can(240000,4)) return;   // +4min
+        const later = document.createElement('section');
+        later.className='section'; later.innerHTML=`
+          <h2>Because you watched</h2>
+          <div class="native-inline">
+            <div class="native-head"><b>Top picks for you</b>
+            <button class="native-close" onclick="window.__nativeAd?.dismiss('inline')" aria-label="Close">✕</button></div>
+            <div class="native-body"><div id="${VENDOR_ID}"></div></div>
+          </div>`;
+        document.querySelector('main').appendChild(later);
+        window.__nativeCap.mark();
+      }, 10000);
     }
   }
   window.addEventListener('load',()=>setTimeout(initNative,700));
+
+  // Hide sticky while main modal is open (avoid overlap)
+  const modal = document.getElementById('modal');
+  if (modal){
+    const mo = new MutationObserver(()=>{ if(!sticky) return; const open = modal.classList.contains('active'); sticky.style.visibility = open ? "hidden" : "visible"; });
+    mo.observe(modal, { attributes:true, attributeFilter:["class"] });
+  }
 })();
 
-/* ---- Inline native injection between cards (desktop) ---- */
-function tryInjectNativeBetween(gridEl, afterIndex = 12){
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"") ||
-                   (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
-  if (isMobile) return; 
-  if (!window.__nativeCap?.can(120000,4)) return;
-  if (gridEl.__nativeInjected) return;
-  const cards = gridEl.querySelectorAll('.card');
-  if (cards.length <= afterIndex) return;
-
-  const wrap = document.createElement('section');
-  wrap.className = 'section';
-  wrap.innerHTML = `
-    <div class="native-inline" style="margin:8px 0 12px">
-      <div class="native-head">
-        <b>Recommended for you</b>
-        <button class="native-close" aria-label="Close">✕</button>
-      </div>
-      <div class="native-body">
-        <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
-      </div>
-    </div>
-  `;
-  wrap.querySelector('.native-close').onclick = () => wrap.remove();
-
-  const target = cards[afterIndex];
-  target.parentNode.insertBefore(wrap, target.nextSibling);
-
-  gridEl.__nativeInjected = true;
-  window.__nativeCap.mark();
+/* Inject native between rows after N cards (desktop) */
+function tryInjectNativeBetween(grid, n=12){
+  if(!grid || grid.querySelector('.native-inline')) return;
+  if(grid.children.length < n) return;
+  const wrap=document.createElement('div');
+  wrap.className='native-inline';
+  wrap.style.gridColumn='1 / -1';
+  wrap.innerHTML=`
+    <div class="native-head"><b>Recommended</b>
+      <button class="native-close" onclick="this.closest('.native-inline').remove()" aria-label="Close">✕</button></div>
+    <div class="native-body"><div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div></div>`;
+  grid.insertBefore(wrap, grid.children[n]);
 }
+
+/* ---------- ItemList structured data ---------- */
+function injectItemListJSON(gridSel, items, listName){
+  const ld = {"@context":"https://schema.org","@type":"ItemList","name": listName,
+    "itemListElement": items.slice(0,12).map((it, i)=>({"@type":"ListItem","position": i+1,"url": `https://your-domain.example/?id=${it.type}:${it.id}`,"name": it.title}))};
+  const s = document.createElement('script'); s.type='application/ld+json'; s.textContent=JSON.stringify(ld); document.head.appendChild(s);
+}
+
+/* ---------- Favorites tip ---------- */
+setTimeout(()=>{
+  const favs = JSON.parse(localStorage.getItem('favorites')||'[]');
+  if (favs.length) return;
+  const t = document.createElement('div');
+  t.style.cssText='position:fixed;bottom:18px;right:18px;background:var(--card);border:1px solid var(--line);padding:12px 14px;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.25);z-index:9999';
+  t.innerHTML='💡 Tip: Tap ❤️ on a title to build your list. We’ll surface better picks for you.';
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 7000);
+}, 30000);
+
+/* ---------- Autoplay prompt (opt-in) ---------- */
+function askAutoplayOnce(){
+  if (localStorage.getItem('__asked_ap')) return;
+  localStorage.setItem('__asked_ap','1');
+  const n = document.createElement('div');
+  n.style.cssText='position:fixed;bottom:18px;left:18px;background:var(--card);border:1px solid var(--line);padding:12px 14px;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.25);z-index:9999';
+  n.innerHTML = `<b>Autoplay next?</b><div style="margin-top:8px;display:flex;gap:8px">
+    <button id="apYes" class="btn sm primary">Yes</button>
+    <button id="apNo" class="btn sm">No</button>
+  </div>`;
+  document.body.appendChild(n);
+  n.querySelector('#apYes').onclick=()=>{ autoPlay=true; localStorage.setItem('autoPlay','true'); n.remove(); };
+  n.querySelector('#apNo').onclick=()=>{ autoPlay=false; localStorage.setItem('autoPlay','false'); n.remove(); };
+}
+window.addEventListener('load', ()=>setTimeout(askAutoplayOnce, 3500));
+
+/* ---------- Keyboard shortcuts ---------- */
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape'){ const mod=document.getElementById('modal'); if(mod?.classList.contains('active')){ mod.querySelector('#closeModal')?.click(); } }
+  if(e.key==='/' && document.activeElement.tagName!=='INPUT'){ e.preventDefault(); document.getElementById('navSearch').focus(); }
+});
 
 /* ---------- Init ---------- */
 async function init(){
@@ -697,15 +748,13 @@ async function init(){
       const grid=$('#gridTrending'); grid.innerHTML='';
       if(!favorites.length){ grid.innerHTML='<p style="grid-column:1/-1;text-align:center;color:#999">Add some titles to your list ❤️</p>'; return; }
       for(const f of favorites){ const d=await details(f.type,f.id); grid.appendChild(cardEl(toItem(d,f.type))); }
-      $('#gridTopRated').innerHTML=''; $('#gridUpcoming').innerHTML='';
-      return;
+      $('#gridTopRated').innerHTML=''; $('#gridUpcoming').innerHTML=''; return;
     }
     if(kind==='continue'){
       const grid=$('#gridTrending'); grid.innerHTML='';
       if(!resume.length){ grid.innerHTML='<p style="grid-column:1/-1;text-align:center;color:#999">No history yet</p>'; return; }
       for(const r of resume){ const d=await details(r.type,r.id); grid.appendChild(cardEl(toItem(d,r.type))); }
-      $('#gridTopRated').innerHTML=''; $('#gridUpcoming').innerHTML='';
-      return;
+      $('#gridTopRated').innerHTML=''; $('#gridUpcoming').innerHTML=''; return;
     }
     await loadGenres(kind);
     pageTrending=1; $('#gridTrending').innerHTML=''; appendTrending();
@@ -719,7 +768,7 @@ async function init(){
   $('#yearInp').onchange=()=>{ lastYear=$('#yearInp').value; refreshDiscover(); };
 
   // hero actions
-  $('#btnPlayHero').onclick=()=>{ if(hero){ openDetails(hero); if(autoPlay) triggerPopunderOnce(); } };
+  $('#btnPlayHero').onclick=()=>{ if(hero) openDetails(hero); triggerPopunderOnce(); };
   $('#btnTrailerHero').onclick=async()=>{ if(!hero) return; const v = await videos(hero.type|| (currentKind==='anime'?'tv':'movie'), hero.id); const yt=(v.results||[]).find(x=>x.site==='YouTube'); if(yt){ $('#trailerFrame').src='https://www.youtube.com/embed/'+yt.key; openModal($('#trailerModal')); triggerPopunderOnce(); } };
   $('#btnFavHero').onclick=()=>{ if(!hero) return; toggleFav(hero); };
 
@@ -730,14 +779,16 @@ async function init(){
   fillSection('#gridUpcoming', ()=>upcomingOrNow('movie'));
 
   // infinite scroll for trending
-  const io=new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting && !lastQuery){ appendTrending(); } }); },{rootMargin:'600px 0px',threshold:0});
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting && !lastQuery){ appendTrending(); } });
+  },{rootMargin:'600px 0px',threshold:0});
   io.observe(document.querySelector('footer'));
 
   // loader hide
   const loader=$('#loader'); const kill=setTimeout(()=>loader.classList.add('hidden'),3200);
   requestIdleCallback(()=>{ loader.classList.add('hidden'); clearTimeout(kill); }, {timeout:1000});
 
-  // PWA (optional if you add /sw.js)
+  // SW register
   if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
 }
 
@@ -747,22 +798,45 @@ async function refreshDiscover(){
   const d = await discover(currentKind, pageTrending, lastQuery);
   const items=(d.results||[]).map(r=>toItem(r,currentKind==='anime'?'tv':currentKind));
   items.forEach(it=> grid.appendChild(cardEl(it)));
-  setHeroFrom(items);
-  // inject inline native after first page results
-  tryInjectNativeBetween(grid, 12);
-  // override for more pages using discover
-  const loadMore = async ()=>{
-    if(fetching) return; fetching=true; pageTrending++;
-    const more = await discover(currentKind, pageTrending, lastQuery);
-    (more.results||[]).map(r=>toItem(r,currentKind==='anime'?'tv':currentKind)).forEach(it=> grid.appendChild(cardEl(it)));
-    // optional: second injection deeper in scroll (only once per grid; skip if already set)
-    tryInjectNativeBetween(grid, 28);
-    fetching=false;
-  };
+  setHeroFrom(items); injectItemListJSON('#gridTrending',items,'Trending');
+  const loadMore = async ()=>{ if(fetching) return; fetching=true; pageTrending++; const more = await discover(currentKind, pageTrending, lastQuery); (more.results||[]).map(r=>toItem(r,currentKind==='anime'?'tv':currentKind)).forEach(it=> grid.appendChild(cardEl(it))); fetching=false; };
   appendTrending = loadMore;
 }
 
 window.addEventListener('load', init);
 </script>
+
+<!-- ============== SERVICE WORKER (SWR) ============== -->
+<script>
+// Auto-create a basic SW if you didn't add one manually (works on static hosts if allowed)
+(async()=>{
+  try{
+    const swSrc = `
+      const V='mfs-v4';
+      const ASSETS=['/','/logo.jpg','/manifest.webmanifest','/favicon.ico'];
+      self.addEventListener('install',e=>e.waitUntil(caches.open(V).then(c=>c.addAll(ASSETS))));
+      self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==V).map(k=>caches.delete(k))))));
+      self.addEventListener('fetch',e=>{
+        const r=e.request;
+        const isGET=r.method==='GET';
+        const p=new URL(r.url).pathname;
+        const isStatic=/\\.(?:js|css|woff2?)$/i.test(p);
+        const isImage=r.destination==='image';
+        const isTMDb=r.url.includes('api.themoviedb.org')||r.url.includes('/api/tmdb');
+        if(!isGET || (!isStatic && !isImage && !isTMDb)) return;
+        e.respondWith((async()=>{
+          const cache=await caches.open(V);
+          const cached=await cache.match(r);
+          const fetchAndPut=fetch(r).then(resp=>{ cache.put(r,resp.clone()).catch(()=>{}); return resp; }).catch(()=>cached);
+          return cached ? (fetchAndPut && cached) : fetchAndPut;
+        })());
+      });`;
+    const blob=new Blob([swSrc],{type:'text/javascript'});
+    const url=URL.createObjectURL(blob);
+    if('serviceWorker' in navigator){ await navigator.serviceWorker.register(url); }
+  }catch{}
+})();
+</script>
+
 </body>
 </html>

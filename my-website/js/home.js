@@ -1,4 +1,4 @@
-/* ==== Config & small helpers ==== */
+/* ===== Small helpers & config ===== */
 const API_KEY = 'f27081ffd1178848ff5106836b2adc93';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_WBACK = 'https://image.tmdb.org/t/p/w1280';
@@ -13,21 +13,21 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
 };
 
-/* ==== State ==== */
-let currentItem = null;        // opened modal item
-let heroItem = null;           // featured
-let continueWatching = store.get('continue', []); // {id,type,progress,title,poster}
+/* ===== State ===== */
+let currentItem = null;
+let heroItem = null;
+let continueWatching = store.get('continue', []); // {id,type,title,poster,progress,timestamp}
 let lastSearchAbort = null;
 let searchTimer = null;
 
-/* ==== UI: Loading ==== */
+/* ===== Loading ===== */
 function hideLoaderSoon(){
   const loader = $('#loading');
   const kill = setTimeout(()=> loader?.classList.add('hidden'), 3000);
   requestIdleCallback(()=>{ loader?.classList.add('hidden'); clearTimeout(kill); }, {timeout: 800});
 }
 
-/* ==== Fetch helpers ==== */
+/* ===== Fetch ===== */
 async function fx(endpoint, params={}, {retries=1, timeout=9000} = {}){
   const url = new URL(BASE_URL + endpoint);
   url.searchParams.set('api_key', API_KEY);
@@ -63,12 +63,11 @@ function toItem(raw, typeGuess){
   };
 }
 
-/* ==== Data sources ==== */
-async function fetchTrending(type){  // "movie" or "tv"
+/* ===== Data sources ===== */
+async function fetchTrending(type){  // "movie" | "tv"
   const d = await fx(`/trending/${type}/week`);
   return (d.results || []);
 }
-
 async function fetchTrendingAnime(){
   let bag = [];
   for (let p=1;p<=3;p++){
@@ -79,14 +78,13 @@ async function fetchTrendingAnime(){
   return bag;
 }
 
-/* ==== Renderers ==== */
+/* ===== Renderers ===== */
 function setBanner(item){
   heroItem = item;
   $('#banner').style.backgroundImage = item.backdrop ? `url('${item.backdrop}')` : '';
   $('#banner-title').textContent = item.title || 'Discover Amazing Stories';
   $('#banner-desc').textContent = item.overview || 'Stream unlimited entertainment';
 }
-
 function displayList(items, containerId){
   const el = document.getElementById(containerId);
   el.innerHTML = '';
@@ -100,10 +98,8 @@ function displayList(items, containerId){
     img.addEventListener('click', ()=> showDetails(it));
     el.appendChild(img);
   });
-  // reveal
   revealObserve(el);
 }
-
 function displayContinue(){
   const wrap = $('#continue-list');
   if (!continueWatching.length){ wrap.innerHTML=''; return; }
@@ -121,36 +117,33 @@ function displayContinue(){
   revealObserve(wrap);
 }
 
-/* ==== Modal ==== */
+/* ===== Modal ===== */
 function showDetails(it){
   currentItem = it;
   $('#modal-title').textContent = it.title || 'Title';
   $('#modal-description').textContent = it.overview || 'No description available.';
   $('#modal-image').src = it.poster || 'https://via.placeholder.com/400x600?text=No+Image';
   $('#modal-rating').innerHTML = it.rating && it.rating!=='—' ? '★'.repeat(Math.max(1, Math.round(parseFloat(it.rating)/2))) : 'No rating';
-  changeServer(); // set initial server
+  changeServer();
   $('#modal').classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  // popunder (once per session) — fires on first “Play” (opening modal is the intent)
+  // Popunder once per session, on first real action
   triggerPopunderOnce();
 
-  // Continue tracking
+  // Track continue
   pushContinue({ id: it.id, type: it.type, title: it.title, poster: it.poster_path || '' });
 }
-
 async function showById(id, type){
   const d = await fx(`/${type}/${id}`);
   const it = toItem(d, type);
   showDetails(it);
 }
-
 function closeModal(){
   $('#modal').classList.remove('active');
   $('#modal-video').src = '';
   document.body.style.overflow = 'auto';
 }
-
 function changeServer(){
   if (!currentItem) return;
   const sel = $('#server').value;
@@ -166,9 +159,8 @@ function changeServer(){
   $('#modal-video').src = url;
 }
 
-/* ==== Continue Watching ==== */
+/* ===== Continue Watching ===== */
 function pushContinue(rec){
-  // de-dup same id/type
   const idx = continueWatching.findIndex(x=>x.id===rec.id && x.type===rec.type);
   if (idx>-1) continueWatching.splice(idx,1);
   continueWatching.unshift({...rec, timestamp: Date.now(), progress: 10});
@@ -177,12 +169,9 @@ function pushContinue(rec){
   displayContinue();
 }
 
-/* ==== Search ==== */
+/* ===== Search ===== */
 async function doSearch(q){
-  if (!q.trim()){
-    $('#search-results').innerHTML = '';
-    return;
-  }
+  if (!q.trim()){ $('#search-results').innerHTML = ''; return; }
   try{
     if (lastSearchAbort) lastSearchAbort.abort();
     lastSearchAbort = new AbortController();
@@ -215,7 +204,7 @@ async function doSearch(q){
   }
 }
 
-/* ==== Reveal on scroll ==== */
+/* ===== Reveal on scroll ===== */
 function revealObserve(scopeEl){
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const io = new IntersectionObserver((entries)=>{
@@ -226,7 +215,7 @@ function revealObserve(scopeEl){
   scopeEl.querySelectorAll('.reveal').forEach(n=> io.observe(n));
 }
 
-/* ==== Theme ==== */
+/* ===== Theme ===== */
 function toggleTheme(){
   const html = document.documentElement;
   if (html.hasAttribute('data-theme')){
@@ -236,10 +225,10 @@ function toggleTheme(){
   }
 }
 
-/* ==== Ads: Popunder + Native (cooldown + cap) ==== */
+/* ===== Ads: Popunder + Native (cooldown + daily cap) ===== */
 function dayStr(){ return new Date().toISOString().slice(0,10); }
 
-// Popunder: once per session on first modal open (intent-based)
+// Popunder once per session
 function triggerPopunderOnce(){
   if (sessionStorage.getItem('__pu_done')==='1') return;
   if (typeof window._pu === 'function'){ window._pu(); sessionStorage.setItem('__pu_done','1'); }
@@ -270,7 +259,6 @@ function triggerPopunderOnce(){
   const vendorId = 'container-a4bf814c4146624bf8b42bd02f5c6d3c';
 
   function assignTo(el){
-    // Ensure only one element uses the vendor id
     const existing = document.getElementById(vendorId);
     if (existing && existing !== el) existing.id = 'native-recycled-slot';
     el.id = vendorId;
@@ -289,7 +277,6 @@ function triggerPopunderOnce(){
     nativeSticky.style.display = 'block';
     nativeSticky.setAttribute('aria-hidden','false');
     const slot = nativeSticky.querySelector('.native-slot');
-    // create inner slot to hold vendor id
     let inner = slot.querySelector('#'+vendorId) || slot.querySelector('.any');
     if (!inner){ inner = document.createElement('div'); slot.appendChild(inner); }
     assignTo(inner);
@@ -305,7 +292,6 @@ function triggerPopunderOnce(){
 
   function initNative(){
     if (!window.__nativeCap?.can(120000,4)) return; // 2 min cooldown, 4/day
-
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"") ||
                      (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
 
@@ -313,7 +299,6 @@ function triggerPopunderOnce(){
       showSticky();
       window.__nativeCap.mark();
     } else {
-      // show inline when TV row intersects (feels natural)
       const anchor = document.getElementById('tvshows-list');
       if (!anchor){ showInline(); window.__nativeCap.mark(); return; }
       const io = new IntersectionObserver((entries)=>{
@@ -330,21 +315,28 @@ function triggerPopunderOnce(){
   window.addEventListener('load', ()=> setTimeout(initNative, 600));
 })();
 
-/* ==== Init ==== */
+/* ===== Init ===== */
 async function init(){
-  // Theme & buttons
+  // Buttons & theme
   $('#theme').addEventListener('click', toggleTheme);
   $('#openSearch').addEventListener('click', ()=>{ $('#search-modal').style.display='flex'; $('#search-input').focus(); });
   $('#closeSearch').addEventListener('click', closeSearch);
   $('#closeModal').addEventListener('click', closeModal);
   $('#playHero').addEventListener('click', ()=>{ if (heroItem) showDetails(heroItem); });
 
-  // Top search (navbar)
+  // Navbar search (opens modal as you type)
   const q = $('#q'), qClear = $('#qClear');
   q.addEventListener('input', e=>{
     const v = e.target.value.trim();
-    if (v){ qClear.style.display='block'; clearTimeout(searchTimer); searchTimer=setTimeout(()=>doSearch(v), 400); $('#search-modal').style.display='flex'; }
-    else { qClear.style.display='none'; closeSearch(); }
+    if (v){
+      qClear.style.display='block';
+      clearTimeout(searchTimer);
+      searchTimer=setTimeout(()=>doSearch(v), 400);
+      $('#search-modal').style.display='flex';
+    } else {
+      qClear.style.display='none';
+      closeSearch();
+    }
   });
   qClear.addEventListener('click', ()=>{ q.value=''; qClear.style.display='none'; closeSearch(); });
 
@@ -386,7 +378,7 @@ async function init(){
     displayList(tR.map(r=>toItem(r,'tv')).filter(x=>x.poster), 'tvshows-list');
   }, 3*60*60*1000);
 
-  // PWA SW
+  // PWA SW (optional)
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
   }

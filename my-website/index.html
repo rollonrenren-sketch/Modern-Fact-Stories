@@ -63,8 +63,11 @@
         .nav-links a{color:var(--text-secondary);text-decoration:none;padding:8px 15px;border-radius:8px;transition:all .3s;font-weight:600}
         .nav-links a:hover,.nav-links a.active{background:var(--hover-bg);color:var(--text-primary)}
         .navbar-right{display:flex;align-items:center;gap:20px}
+        .search-container{position:relative;display:flex;align-items:center}
         .search-bar{background:var(--secondary-bg);border:2px solid var(--border-color);color:var(--text-primary);padding:10px 40px 10px 15px;border-radius:25px;width:280px;transition:all .3s}
         .search-bar:focus{outline:none;border-color:var(--accent-red);width:320px}
+        .search-clear{position:absolute;right:10px;background:var(--accent-red);color:white;border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:none;transition:all .3s}
+        .search-clear:hover{transform:scale(1.1)}
         .theme-toggle,.user-profile{width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s}
         .theme-toggle{background:var(--secondary-bg);border:2px solid var(--border-color);font-size:20px}
         .theme-toggle:hover{transform:rotate(180deg)}
@@ -114,6 +117,8 @@
         .next-episode-overlay.show{display:block}
         .countdown{font-size:48px;font-weight:900;color:var(--accent-red);margin:20px 0}
         .footer{background:var(--secondary-bg);padding:60px 40px 30px;margin-top:80px;border-top:1px solid var(--border-color)}
+        .no-results{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)}
+        .no-results h3{font-size:1.5rem;margin-bottom:10px;color:var(--text-primary)}
         @media (max-width:768px){
           .navbar{flex-direction:column;padding:15px 20px;gap:15px}
           .nav-links{flex-wrap:wrap;justify-content:center}
@@ -142,14 +147,17 @@
                 <span class="logo-text">MODERN FACT STORIES</span>
             </div>
             <div class="nav-links">
-                <a href="#" class="active">Home</a>
+                <a href="#" class="active" onclick="showAllSections()">Home</a>
                 <a href="#continue-watching">Continue Watching</a>
                 <a href="#trending">Trending</a>
                 <a href="#favorites">My List</a>
             </div>
         </div>
         <div class="navbar-right">
-            <input type="text" class="search-bar" placeholder="Search..." id="navSearch">
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search movies..." id="navSearch">
+                <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
+            </div>
             <button class="theme-toggle" id="themeToggle">🌙</button>
             <div class="user-profile">U</div>
         </div>
@@ -165,6 +173,13 @@
                 <button class="btn btn-secondary" onclick="toggleFavoriteHero()">❤️ My List</button>
             </div>
         </div>
+    </div>
+
+    <div class="section" id="search-results" style="display:none;">
+        <div class="section-header">
+            <div class="section-title">🔍 Search Results</div>
+        </div>
+        <div class="movie-grid" id="searchGrid"></div>
     </div>
 
     <div class="section" id="continue-watching" style="display:none;">
@@ -183,7 +198,7 @@
         </div>
     </div>
 
-    <div class="section">
+    <div class="section" id="popular-section">
         <div class="section-header">
             <div class="section-title">⭐ Popular Movies</div>
         </div>
@@ -192,7 +207,7 @@
         </div>
     </div>
 
-    <div class="section">
+    <div class="section" id="recommended-section">
         <div class="section-header">
             <div class="section-title">📺 Recommended For You</div>
         </div>
@@ -257,7 +272,7 @@
         <p style="text-align: center; color: var(--text-muted);">&copy; 2025 Modern Fact Stories. Powered by TMDb API.</p>
     </footer>
 
-    <!-- Adsterra Popunder tag (load once) -->
+    <!-- Adsterra Popunder (correctly placed before main script) -->
     <script type="text/javascript" src="//pl27965320.effectivegatecpm.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js"></script>
 
     <script>
@@ -283,12 +298,13 @@
         let autoplayTimer = null;
         let currentSpeed = 1.0;
         let heroMovieId = null;
+        let searchTimeout = null;
 
-        // --- SMART POPUNDER: gesture + dwell + per-device cooldown + every 2nd new movie (desktop default) ---
-        const DESKTOP_COOLDOWN = 90_000;   // 90s
-        const MOBILE_COOLDOWN  = 180_000;  // 180s
-        const MIN_DWELL_MS     = 8_000;    // 8s before first pop
-        const FIRE_EVERY_N     = 2;        // fire on every 2nd *new* movie
+        // SMART POPUNDER
+        const DESKTOP_COOLDOWN = 90000;
+        const MOBILE_COOLDOWN = 180000;
+        const MIN_DWELL_MS = 8000;
+        const FIRE_EVERY_N = 2;
 
         const _isMobile = /Mobi|Android/i.test(navigator.userAgent);
         const _cooldown = _isMobile ? MOBILE_COOLDOWN : DESKTOP_COOLDOWN;
@@ -300,7 +316,6 @@
           window.addEventListener(evt, () => { _hasGesture = true; }, { once:true, passive:true });
         });
 
-        // Guard window.open override so ads can still open
         const _origOpen = window.open?.bind(window) || null;
         window._allowAdOpen = false;
         window.open = function(...args){
@@ -310,13 +325,11 @@
 
         function triggerPopSmart(movieId){
           try{
-            // Desktop-only by default; comment next line if you want mobile too
             if (_isMobile) return;
-
             if (!_hasGesture || (Date.now() - _firstSeenAt) < MIN_DWELL_MS) return;
 
             const now = Date.now();
-            const lastId   = sessionStorage.getItem('pop_last_movie_id') || '';
+            const lastId = sessionStorage.getItem('pop_last_movie_id') || '';
             const lastTime = parseInt(sessionStorage.getItem('pop_last_time') || '0', 10);
             const seenCount = parseInt(sessionStorage.getItem('pop_seen_count') || '0', 10);
 
@@ -328,10 +341,8 @@
               const shouldFire = cooledDown && (nextCount % FIRE_EVERY_N === 0);
 
               if (shouldFire) {
-                // briefly allow window.open for ad tag if it needs it
                 window._allowAdOpen = true;
                 setTimeout(()=>{ window._allowAdOpen = false; }, 2000);
-
                 if (typeof window._pu === 'function') { window._pu(); }
                 sessionStorage.setItem('pop_last_time', String(now));
               }
@@ -339,6 +350,89 @@
               sessionStorage.setItem('pop_seen_count', String(nextCount));
             }
           }catch(e){}
+        }
+
+        // SEARCH FUNCTIONALITY
+        const searchInput = document.getElementById('navSearch');
+        const searchClear = document.getElementById('searchClear');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 0) {
+                searchClear.style.display = 'block';
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => performSearch(query), 500);
+            } else {
+                searchClear.style.display = 'none';
+                clearSearch();
+            }
+        });
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = searchInput.value.trim();
+                if (query) performSearch(query);
+            }
+        });
+
+        async function performSearch(query) {
+            const searchSection = document.getElementById('search-results');
+            const searchGrid = document.getElementById('searchGrid');
+            
+            // Hide other sections
+            document.getElementById('trending').style.display = 'none';
+            document.getElementById('popular-section').style.display = 'none';
+            document.getElementById('recommended-section').style.display = 'none';
+            document.getElementById('heroBanner').style.display = 'none';
+            
+            // Show search results
+            searchSection.style.display = 'block';
+            searchGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">🔍 Searching...</div>';
+
+            try {
+                const data = await fetchTMDb('/search/multi', { query: query, page: 1 });
+                
+                if (data.results && data.results.length > 0) {
+                    const movies = data.results
+                        .filter(item => item.media_type === 'movie' || item.media_type === 'tv')
+                        .map(item => convertMovie(item, item.media_type === 'tv'));
+                    
+                    if (movies.length > 0) {
+                        loadMovieGrid('searchGrid', movies);
+                    } else {
+                        showNoResults(query);
+                    }
+                } else {
+                    showNoResults(query);
+                }
+            } catch (error) {
+                searchGrid.innerHTML = '<div class="no-results"><h3>❌ Search Error</h3><p>Unable to search. Please try again.</p></div>';
+            }
+        }
+
+        function showNoResults(query) {
+            const searchGrid = document.getElementById('searchGrid');
+            searchGrid.innerHTML = `
+                <div class="no-results">
+                    <h3>😕 No Results Found</h3>
+                    <p>No movies or TV shows found for "<strong>${query}</strong>"</p>
+                    <p style="margin-top:10px">Try searching with different keywords</p>
+                </div>
+            `;
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            showAllSections();
+        }
+
+        function showAllSections() {
+            document.getElementById('search-results').style.display = 'none';
+            document.getElementById('trending').style.display = 'block';
+            document.getElementById('popular-section').style.display = 'block';
+            document.getElementById('recommended-section').style.display = 'block';
+            document.getElementById('heroBanner').style.display = 'flex';
         }
 
         async function fetchTMDb(endpoint, params = {}) {
@@ -475,7 +569,6 @@
         }
 
         async function openModal(id, type) {
-            // SMART POPUNDER trigger at movie open
             triggerPopSmart(id);
 
             const data = await fetchTMDb(`/${type}/${id}`);
@@ -665,5 +758,3 @@
     </script>
 </body>
 </html>
-```
-

@@ -1,5 +1,8 @@
+// functions/api/tmdb.js
+// Secure TMDb API Proxy using Cloudflare Environment Variables
+
 export async function onRequest(context) {
-  const { request } = context;
+  const { request, env } = context;  // env gives access to environment variables
   const url = new URL(request.url);
   
   // Handle CORS preflight
@@ -13,14 +16,16 @@ export async function onRequest(context) {
     });
   }
   
-  // Get parameters
+  // Get endpoint from URL parameter
   const endpoint = url.searchParams.get('endpoint');
-  const apiKey = url.searchParams.get('api_key');
   
-  if (!endpoint || !apiKey) {
+  // ✅ Get API key from SECURE environment variable
+  const apiKey = env.TMDB_API_KEY;
+  
+  // Validate parameters
+  if (!endpoint) {
     return new Response(JSON.stringify({ 
-      error: 'Missing parameters',
-      received: { endpoint, apiKey: apiKey ? 'present' : 'missing' }
+      error: 'Missing endpoint parameter' 
     }), {
       status: 400,
       headers: {
@@ -30,48 +35,10 @@ export async function onRequest(context) {
     });
   }
 
-  try {
-    // Build TMDb URL
-    const tmdbUrl = new URL(`https://api.themoviedb.org/3${endpoint}`);
-    tmdbUrl.searchParams.append('api_key', apiKey);
-    tmdbUrl.searchParams.append('language', 'en-US');
-    
-    // Add other query params
-    for (const [key, value] of url.searchParams) {
-      if (key !== 'endpoint' && key !== 'api_key') {
-        tmdbUrl.searchParams.append(key, value);
-      }
-    }
-
-    console.log('Fetching from TMDb:', tmdbUrl.toString());
-
-    // Fetch from TMDb
-    const response = await fetch(tmdbUrl.toString());
-    
-    if (!response.ok) {
-      throw new Error(`TMDb returned ${response.status}`);
-    }
-    
-    const data = await response.json();
-
-    // Return with CORS headers
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Cache-Control': 'public, max-age=3600',
-      }
-    });
-
-  } catch (error) {
-    console.error('Proxy error:', error);
-    
+  if (!apiKey) {
     return new Response(JSON.stringify({ 
-      error: 'Proxy failed',
-      message: error.message,
-      endpoint: endpoint
+      error: 'API key not configured',
+      message: 'Environment variable TMDB_API_KEY is missing'
     }), {
       status: 500,
       headers: {
@@ -80,4 +47,29 @@ export async function onRequest(context) {
       }
     });
   }
-}
+
+  try {
+    // Build TMDb API URL
+    const tmdbUrl = new URL(`https://api.themoviedb.org/3${endpoint}`);
+    tmdbUrl.searchParams.append('api_key', apiKey);
+    tmdbUrl.searchParams.append('language', 'en-US');
+    
+    // Copy other query parameters (page, query, etc.)
+    for (const [key, value] of url.searchParams) {
+      if (key !== 'endpoint' && key !== 'api_key') {
+        tmdbUrl.searchParams.append(key, value);
+      }
+    }
+
+    console.log('🔒 Secure fetch from TMDb');
+
+    // Fetch from TMDb API
+    const response = await fetch(tmdbUrl.toString());
+    
+    if (!response.ok) {
+      throw new Error(`TMDb API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+
+    // Return

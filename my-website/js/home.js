@@ -25,13 +25,15 @@ function hideLoaderSoon(){
   requestIdleCallback(()=>{ loader?.classList.add('hidden'); clearTimeout(kill); }, {timeout: 800});
 }
 
-/* ===== Fetch (uses backend proxy, no API_KEY exposed) ===== */
-async function fxProxy({mode, type, query, id, page=1}, { retries=1, timeout=9000 } = {}) {
-  let url = `/api/tmdb-proxy?mode=${encodeURIComponent(mode)}`;
-  if (type) url += `&type=${encodeURIComponent(type)}`;
-  if (query !== undefined) url += `&query=${encodeURIComponent(query)}`;
-  if (id !== undefined) url += `&id=${encodeURIComponent(id)}`;
-  if (page !== undefined) url += `&page=${encodeURIComponent(page)}`;
+/* ===== Fetch through backend proxy ===== */
+async function fxProxy(params, { retries=1, timeout=9000 } = {}) {
+  let url = `/api/tmdb-proxy?`;
+  if (params.mode) url += `mode=${encodeURIComponent(params.mode)}&`;
+  if (params.type) url += `type=${encodeURIComponent(params.type)}&`;
+  if (params.query !== undefined) url += `query=${encodeURIComponent(params.query)}&`;
+  if (params.id !== undefined) url += `id=${encodeURIComponent(params.id)}&`;
+  if (params.page !== undefined) url += `page=${encodeURIComponent(params.page)}&`;
+  url = url.replace(/&$/, '');
 
   for (let a = 0; a <= retries; a++) {
     const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), timeout);

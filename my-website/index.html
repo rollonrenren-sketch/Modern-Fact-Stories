@@ -1,61 +1,190 @@
-<style id="mfs-tweaks">
-  /* ============ UI TWEAKS: Sizing & polish ============ */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <title>Modern Fact Stories — Watch Movies & Series</title>
+  <link rel="icon" href="logo.jpg" />
 
-  /* Top-right control (heart) — smaller & less intrusive */
-  .movie-card .action-btn{
-    width: 30px; height: 30px; font-size: 14px;
-    opacity:.9; /* a bit more visible without looking huge */
-  }
-  /* Badge top-left — slimmer */
-  .movie-card .quality-badge{
-    padding: 3px 8px; font-size: 9px; border-radius: 999px;
-  }
+  <!-- SEO -->
+  <link rel="canonical" href="https://your-domain.example/" />
+  <meta name="description" content="Watch trending movies and series. Fast player, clean UI, instant search, and resume where you left off." />
+  <meta property="og:title" content="Modern Fact Stories" />
+  <meta property="og:description" content="Trending movies & series. Fast player, instant search, resume where you left off." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://your-domain.example/" />
+  <meta property="og:image" content="https://your-domain.example/logo.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
 
-  /* Poster readability: gentle top gradient so titles pop */
-  .poster-wrap::after{
-    content:""; position:absolute; inset:0;
-    background:linear-gradient(to top, rgba(0,0,0,.0) 60%, rgba(0,0,0,.35) 100%);
-    pointer-events:none;
-  }
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.webmanifest" />
 
-  /* Global subtle smoothing */
-  html{ scroll-behavior:smooth; }
-  .movie-card{ will-change: transform, box-shadow; }
-  .hero-inner{ will-change: box-shadow, transform; }
+  <!-- Performance preconnects -->
+  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
+  <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+  <link rel="dns-prefetch" href="//idolinflectiongentlemen.com">
+  <link rel="preconnect" href="https://idolinflectiongentlemen.com" crossorigin>
 
-  /* ============ LIGHT ANIMATIONS (very gentle) ============ */
+  <!-- Styles & App -->
+  <link rel="stylesheet" href="css/home.css" />
+  <script defer src="js/home.js"></script>
 
-  /* Card reveal on scroll (opacity/translate only) */
-  .reveal{
-    opacity:0; transform:translateY(8px);
-    transition:opacity .45s ease, transform .45s ease;
-  }
-  .reveal.in{
-    opacity:1; transform:none;
-  }
+  <!-- (Optional) Analytics -->
+  <script defer data-domain="your-domain.example" src="https://plausible.io/js/script.js"></script>
+</head>
+<body>
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <img class="loading-logo" src="logo.jpg" alt="MFS" />
+    <div class="loading-ring" role="status" aria-label="Loading"></div>
+    <p class="loading-text">Warming up your stream…</p>
+  </div>
 
-  /* Hero ambient glow breathing (box-shadow only, low cost) */
-  @keyframes ambientGlow{
-    0%{ box-shadow: var(--shadow-lg); }
-    50%{ box-shadow: 0 10px 48px rgba(229,9,20,.18), 0 4px 22px rgba(0,0,0,.2); }
-    100%{ box-shadow: var(--shadow-lg); }
-  }
-  .hero .hero-inner{
-    animation: ambientGlow 8s ease-in-out infinite;
-  }
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-left">
+      <a class="brand" href="#">
+        <img src="logo.jpg" class="logo-img" alt="MFS Logo" />
+        <span class="logo-text">MODERN FACT STORIES</span>
+      </a>
+    </div>
+    <div class="nav-right">
+      <div class="search-wrap">
+        <input id="q" class="search-bar" type="text" placeholder="Search movies & series…" aria-label="Search" />
+        <button id="qClear" class="search-clear" aria-label="Clear search">×</button>
+      </div>
+      <button id="theme" class="theme-toggle" aria-label="Toggle theme">🌙</button>
+      <button id="openSearch" class="icon-btn" aria-label="Open search">🔎</button>
+    </div>
+  </header>
 
-  /* Hover lift stays but make it even smoother */
-  .movie-card:hover{ transform:translateY(-5px); }
+  <!-- BANNER -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div id="banner" class="hero-media" role="img" aria-label="Featured banner"></div>
+      <div class="hero-content">
+        <span class="hero-badge">⚡ Featured</span>
+        <h1 id="banner-title">Discover Amazing Stories</h1>
+        <p id="banner-desc">Stream unlimited entertainment</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="playHero">▶️ Play</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  /* Mobile fine-tune: make the top-right control even smaller */
-  @media (max-width: 768px){
-    .movie-card .action-btn{ width: 26px; height: 26px; font-size: 12px; }
-    .movie-card .quality-badge{ font-size: 8.5px; padding: 2px 7px; }
-  }
+  <!-- ROWS -->
+  <main>
+    <section class="row">
+      <h2>⏭️ Continue Watching</h2>
+      <div id="continue-list" class="list"></div>
+    </section>
 
-  /* Respect reduced motion */
-  @media (prefers-reduced-motion: reduce){
-    .hero .hero-inner{ animation: none !important; }
-    .reveal{ transition: none !important; opacity:1 !important; transform:none !important; }
-  }
-</style>
+    <section class="row">
+      <h2>🔥 Trending Movies</h2>
+      <div id="movies-list" class="list">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </section>
+
+    <section class="row">
+      <h2>📺 Trending TV Shows</h2>
+      <div id="tvshows-list" class="list">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </section>
+
+    <section class="row">
+      <h2>🍜 Popular Anime</h2>
+      <div id="anime-list" class="list">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </section>
+
+    <!-- Desktop/Tablet inline native anchor -->
+    <section class="row" id="native-inline" aria-hidden="true" style="display:none;">
+      <h2>Recommended</h2>
+      <div class="native-inline">
+        <div class="native-head">
+          <b>Because you like streaming</b>
+          <button type="button" class="native-close" aria-label="Close" onclick="window.__nativeAd?.dismiss('inline')">✕</button>
+        </div>
+        <div class="native-body">
+          <!-- Your Adsterra native container id (will be reassigned by JS if needed) -->
+          <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky native for mobile -->
+  <div id="native-sticky" class="native-sticky" aria-hidden="true" style="display:none;">
+    <div class="native-sticky-inner">
+      <div class="native-title">Trending picks for you</div>
+      <div class="native-actions">
+        <button class="btn btn-primary btn-sm" type="button" onclick="window.__nativeAd?.cta()">Open</button>
+        <button class="btn btn-secondary btn-sm" type="button" aria-label="Close" onclick="window.__nativeAd?.dismiss('sticky')">✕</button>
+      </div>
+    </div>
+    <div class="native-slot">
+      <!-- If mobile, JS will move the Adsterra container into here -->
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-label="Details modal">
+    <div class="modal-content">
+      <button class="close" id="closeModal" aria-label="Close modal">×</button>
+      <div class="modal-body">
+        <img id="modal-image" alt="Poster" />
+        <div class="modal-text">
+          <h2 id="modal-title">Title</h2>
+          <p class="stars" id="modal-rating"></p>
+          <p id="modal-description">Description</p>
+          <div class="server-selector">
+            <label for="server">Servers: </label>
+            <select id="server" onchange="changeServer()">
+              <option value="vidsrc.cc">VidSrc.cc</option>
+              <option value="vidsrc.me">VidSrc.me</option>
+              <option value="player.videasy.net">Videasy</option>
+            </select>
+          </div>
+          <div class="video-wrap">
+            <iframe id="modal-video" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH MODAL -->
+  <div id="search-modal" class="search-modal" role="dialog" aria-modal="true" aria-label="Search modal">
+    <button class="close" id="closeSearch" aria-label="Close search">×</button>
+    <input id="search-input" type="text" placeholder="Search movies, TV shows…" />
+    <div id="search-results" class="results"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p>⚠️ DMCA & Copyright Notice</p>
+      <p style="color:#999">This website does not host copyrighted content. Videos are embedded from third-party sources.</p>
+      <p>📧 Contact: <a href="mailto:rollonrenren@gmail.com">rollonrenren@gmail.com</a></p>
+      <div class="footer-links">
+        <a href="#">Home</a>
+        <a href="#movies">Movies</a>
+        <a href="#tv">TV</a>
+        <a href="#anime">Anime</a>
+      </div>
+      <p style="color:#777">&copy; 2025 Modern Fact Stories · Powered by TMDb</p>
+    </div>
+  </footer>
+
+  <!-- Your Adsterra codes -->
+  <!-- Popunder (fires once per session on first Play) -->
+  <script type="text/javascript" src="//idolinflectiongentlemen.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js"></script>
+  <!-- Native (single vendor script; our JS positions its container) -->
+  <script async data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>
+</body>
+</html>

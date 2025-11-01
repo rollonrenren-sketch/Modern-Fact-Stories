@@ -17,7 +17,7 @@
   <meta property="og:image" content="https://your-domain.example/logo.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
 
-  <!-- PWA -->
+  <!-- PWA (optional; works if you add sw.js + manifest) -->
   <link rel="manifest" href="/manifest.webmanifest" />
 
   <!-- Performance preconnects -->
@@ -35,16 +35,16 @@
 </head>
 <body>
   <!-- Loading -->
-  <div class="loading" id="loading">
+  <div class="loading" id="loading" aria-live="polite" aria-busy="true">
     <img class="loading-logo" src="logo.jpg" alt="MFS" />
     <div class="loading-ring" role="status" aria-label="Loading"></div>
     <p class="loading-text">Warming up your stream…</p>
   </div>
 
   <!-- NAVBAR -->
-  <header class="navbar">
+  <header class="navbar" role="navigation" aria-label="Primary">
     <div class="nav-left">
-      <a class="brand" href="#">
+      <a class="brand" href="#" aria-label="Go to home">
         <img src="logo.jpg" class="logo-img" alt="MFS Logo" />
         <span class="logo-text">MODERN FACT STORIES</span>
       </a>
@@ -59,8 +59,8 @@
     </div>
   </header>
 
-  <!-- BANNER -->
-  <section class="hero">
+  <!-- HERO -->
+  <section class="hero" id="heroBanner">
     <div class="hero-inner">
       <div id="banner" class="hero-media" role="img" aria-label="Featured banner"></div>
       <div class="hero-content">
@@ -76,26 +76,26 @@
 
   <!-- ROWS -->
   <main>
-    <section class="row">
+    <section class="row" id="continue-section">
       <h2>⏭️ Continue Watching</h2>
       <div id="continue-list" class="list"></div>
     </section>
 
-    <section class="row">
+    <section class="row" id="movies-section">
       <h2>🔥 Trending Movies</h2>
       <div id="movies-list" class="list">
         <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
       </div>
     </section>
 
-    <section class="row">
+    <section class="row" id="tv-section">
       <h2>📺 Trending TV Shows</h2>
       <div id="tvshows-list" class="list">
         <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
       </div>
     </section>
 
-    <section class="row">
+    <section class="row" id="anime-section">
       <h2>🍜 Popular Anime</h2>
       <div id="anime-list" class="list">
         <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
@@ -111,7 +111,7 @@
           <button type="button" class="native-close" aria-label="Close" onclick="window.__nativeAd?.dismiss('inline')">✕</button>
         </div>
         <div class="native-body">
-          <!-- Your Adsterra native container id (will be reassigned by JS if needed) -->
+          <!-- Your Adsterra native container id (JS moves it here on desktop) -->
           <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
         </div>
       </div>
@@ -127,9 +127,7 @@
         <button class="btn btn-secondary btn-sm" type="button" aria-label="Close" onclick="window.__nativeAd?.dismiss('sticky')">✕</button>
       </div>
     </div>
-    <div class="native-slot">
-      <!-- If mobile, JS will move the Adsterra container into here -->
-    </div>
+    <div class="native-slot"><!-- JS injects the container on mobile --></div>
   </div>
 
   <!-- MODAL -->
@@ -143,7 +141,7 @@
           <p class="stars" id="modal-rating"></p>
           <p id="modal-description">Description</p>
           <div class="server-selector">
-            <label for="server">Servers: </label>
+            <label for="server">Servers:&nbsp;</label>
             <select id="server" onchange="changeServer()">
               <option value="vidsrc.cc">VidSrc.cc</option>
               <option value="vidsrc.me">VidSrc.me</option>
@@ -173,16 +171,16 @@
       <p>📧 Contact: <a href="mailto:rollonrenren@gmail.com">rollonrenren@gmail.com</a></p>
       <div class="footer-links">
         <a href="#">Home</a>
-        <a href="#movies">Movies</a>
-        <a href="#tv">TV</a>
-        <a href="#anime">Anime</a>
+        <a href="#movies-section">Movies</a>
+        <a href="#tv-section">TV</a>
+        <a href="#anime-section">Anime</a>
       </div>
       <p style="color:#777">&copy; 2025 Modern Fact Stories · Powered by TMDb</p>
     </div>
   </footer>
 
-  <!-- Your Adsterra codes -->
-  <!-- Popunder (fires once per session on first Play) -->
+  <!-- Adsterra codes -->
+  <!-- Popunder (we’ll trigger once per session on first genuine action) -->
   <script type="text/javascript" src="//idolinflectiongentlemen.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js"></script>
   <!-- Native (single vendor script; our JS positions its container) -->
   <script async data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>

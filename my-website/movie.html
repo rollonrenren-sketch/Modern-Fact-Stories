@@ -69,6 +69,7 @@
             
             <!-- Video Player with Server Selection -->
             <div id="videoContainer" style="display:none;">
+                <!-- Server Selection -->
                 <div class="player-controls">
                     <h3>🎬 Select Player Server:</h3>
                     <div class="server-buttons">
@@ -78,6 +79,24 @@
                     </div>
                 </div>
                 
+                <!-- TV Show Episode Selector (NEW - Only shows for TV Shows) -->
+                <div id="episodeSelector" class="episode-selector" style="display:none;">
+                    <div class="episode-controls">
+                        <div class="season-selector-wrapper">
+                            <label for="seasonSelect">📺 Season:</label>
+                            <select id="seasonSelect" class="season-select" onchange="loadEpisodes()">
+                                <!-- Populated by JavaScript -->
+                            </select>
+                        </div>
+                        <p class="episode-hint">👇 Click an episode to watch</p>
+                    </div>
+                    
+                    <div class="episodes-grid" id="episodesGrid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Video Player -->
                 <div class="video-container">
                     <iframe id="videoPlayer" allowfullscreen allow="autoplay; fullscreen"></iframe>
                 </div>

@@ -1,17 +1,53 @@
-// Modern Fact Stories - Movie Fetching Script
-// Uses your secure Cloudflare Worker to keep API key hidden
+// Modern Fact Stories v2.0 - Enhanced with Theme Toggle
+// API KEY STAYS SECURE - Using Cloudflare Worker
 
-// Your Cloudflare Worker URL (API key stays hidden here!)
 const WORKER_URL = 'https://chanfana-openapi-template.gallionmelvs.workers.dev';
 
-// Hide loading screen when page loads
+// Theme Toggle Functionality
+const themeToggle = document.getElementById('themeToggle');
+const body = document.body;
+const sunIcon = document.querySelector('.sun-icon');
+const moonIcon = document.querySelector('.moon-icon');
+
+// Check for saved theme preference or default to 'light'
+const currentTheme = localStorage.getItem('theme') || 'light';
+body.classList.add(currentTheme + '-mode');
+updateThemeIcons(currentTheme);
+
+themeToggle.addEventListener('click', () => {
+    const isLight = body.classList.contains('light-mode');
+    
+    if (isLight) {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+        localStorage.setItem('theme', 'dark');
+        updateThemeIcons('dark');
+    } else {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+        localStorage.setItem('theme', 'light');
+        updateThemeIcons('light');
+    }
+});
+
+function updateThemeIcons(theme) {
+    if (theme === 'dark') {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    }
+}
+
+// Hide loading screen with smooth transition
 window.addEventListener('load', () => {
     setTimeout(() => {
         document.getElementById('loadingScreen').classList.add('hidden');
-    }, 1000);
+    }, 1200);
 });
 
-// Fetch movies from TMDB via your secure Worker
+// Fetch movies from TMDB via YOUR SECURE Worker (API key hidden!)
 async function fetchMovies(endpoint) {
     try {
         const response = await fetch(`${WORKER_URL}?path=${endpoint}`);
@@ -24,7 +60,7 @@ async function fetchMovies(endpoint) {
     }
 }
 
-// Create movie card HTML
+// Create movie card with smooth hover effects
 function createMovieCard(movie) {
     const posterPath = movie.poster_path 
         ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
@@ -51,14 +87,27 @@ function createMovieCard(movie) {
     `;
 }
 
-// Display movies in grid
+// Display movies with fade-in animation
 function displayMovies(movies, gridId) {
     const grid = document.getElementById(gridId);
     if (!movies || movies.length === 0) {
-        grid.innerHTML = '<p class="loading-placeholder">No movies found</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">No movies found</p>';
         return;
     }
+    
     grid.innerHTML = movies.map(movie => createMovieCard(movie)).join('');
+    
+    // Add stagger animation to cards
+    const cards = grid.querySelectorAll('.movie-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.4s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
 }
 
 // Open movie detail page
@@ -66,7 +115,7 @@ function openMovie(movieId, mediaType = 'movie') {
     window.location.href = `movie.html?id=${movieId}&type=${mediaType}`;
 }
 
-// Search functionality
+// Search functionality with debounce
 let searchTimeout;
 document.getElementById('searchInput').addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
@@ -79,11 +128,14 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
     
     searchTimeout = setTimeout(async () => {
         const searchGrid = document.getElementById('searchGrid');
-        searchGrid.innerHTML = '<p class="loading-placeholder">Searching...</p>';
+        searchGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">Searching...</p>';
         document.getElementById('searchSection').style.display = 'block';
         
         const movies = await fetchMovies(`search/multi&query=${encodeURIComponent(query)}`);
         displayMovies(movies.filter(m => m.poster_path), 'searchGrid');
+        
+        // Scroll to search results
+        document.getElementById('searchSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 500);
 });
 
@@ -92,9 +144,9 @@ document.getElementById('searchBtn').addEventListener('click', () => {
     input.focus();
 });
 
-// Load all movie categories on page load
+// Load all movie categories
 async function loadAllMovies() {
-    // Trending (movies and TV)
+    // Trending
     const trending = await fetchMovies('trending/all/week');
     displayMovies(trending.slice(0, 18), 'trendingGrid');
     
@@ -111,24 +163,22 @@ async function loadAllMovies() {
     displayMovies(upcoming.slice(0, 18), 'upcomingGrid');
 }
 
-// Check URL parameters for category filtering
+// Check URL parameters for filtering
 const urlParams = new URLSearchParams(window.location.search);
 const category = urlParams.get('category');
 const genre = urlParams.get('genre');
 
 if (category === 'movie') {
-    // Show only movies
     loadAllMovies();
 } else if (category === 'tv') {
-    // Show TV shows
     fetchMovies('tv/popular').then(shows => displayMovies(shows, 'popularGrid'));
     fetchMovies('tv/top_rated').then(shows => displayMovies(shows, 'topRatedGrid'));
     fetchMovies('tv/on_the_air').then(shows => displayMovies(shows, 'upcomingGrid'));
+    fetchMovies('trending/tv/week').then(shows => displayMovies(shows, 'trendingGrid'));
 } else if (genre === 'trending') {
-    // Show trending content
     fetchMovies('trending/all/day').then(movies => displayMovies(movies, 'trendingGrid'));
+    fetchMovies('trending/movie/week').then(movies => displayMovies(movies, 'popularGrid'));
 } else {
-    // Default: load all movies
     loadAllMovies();
 }
 
@@ -140,3 +190,23 @@ document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
     }
 });
+
+// Intersection Observer for lazy loading (performance optimization)
+if ('IntersectionObserver' in window) {
+    const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src || img.src;
+                imageObserver.unobserve(img);
+            }
+        });
+    });
+    
+    // Observe all images after they're loaded
+    setTimeout(() => {
+        document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }, 1000);
+}

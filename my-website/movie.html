@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO will be updated dynamically by JS -->
     <title id="pageTitle">Movie - Modern Fact Stories</title>
+    <meta name="description" id="pageDescription" content="Watch movies and TV shows online for free in HD quality on Modern Fact Stories">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="video.movie">
+    <meta property="og:site_name" content="Modern Fact Stories">
+    <meta property="og:title" id="ogTitle" content="Watch Movie - Modern Fact Stories">
+    <meta property="og:description" id="ogDescription" content="Watch this movie for free in HD quality">
+    <meta property="og:image" id="ogImage" content="https://modern-fact-stories-cof.pages.dev/logo.jpg">
+    
     <link rel="icon" href="logo.jpg" type="image/jpeg">
     
     <!-- Google Fonts -->
@@ -59,16 +70,16 @@
             <!-- Video Player with Server Selection -->
             <div id="videoContainer" style="display:none;">
                 <div class="player-controls">
-                    <h3>Select Player:</h3>
+                    <h3>🎬 Select Player Server:</h3>
                     <div class="server-buttons">
-                        <button class="server-btn active" onclick="switchServer('vidsrc')">Server 1</button>
-                        <button class="server-btn" onclick="switchServer('vidsrc2')">Server 2</button>
-                        <button class="server-btn" onclick="switchServer('embed')">Server 3</button>
+                        <button class="server-btn active" onclick="switchServer('vidsrc')">VidSrc (Recommended)</button>
+                        <button class="server-btn" onclick="switchServer('vidsrc2')">VidSrc Alt</button>
+                        <button class="server-btn" onclick="switchServer('embed')">2Embed</button>
                     </div>
                 </div>
                 
                 <div class="video-container">
-                    <iframe id="videoPlayer" allowfullscreen allow="autoplay"></iframe>
+                    <iframe id="videoPlayer" allowfullscreen allow="autoplay; fullscreen"></iframe>
                 </div>
             </div>
 
@@ -96,14 +107,26 @@
                                 </svg>
                                 Share
                             </button>
+                            <button class="action-btn" onclick="window.history.back()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                                Go Back
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recommendations -->
                 <div class="recommendations-section">
-                    <h2 class="section-title">You Might Also Like</h2>
-                    <div class="movie-grid" id="recommendationsGrid"></div>
+                    <h2 class="section-title">🎯 You Might Also Like</h2>
+                    <div class="movie-grid" id="recommendationsGrid">
+                        <div class="skeleton-loader"></div>
+                        <div class="skeleton-loader"></div>
+                        <div class="skeleton-loader"></div>
+                        <div class="skeleton-loader"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,7 +141,7 @@
                 If you believe your copyrighted work is accessible via this site, contact us at 
                 <a href="mailto:rollonrenren@gmail.com">rollonrenren@gmail.com</a> for immediate removal.</p>
             </div>
-            <p class="footer-copy">&copy; 2025 Modern Fact Stories. For educational purposes only.</p>
+            <p class="footer-copy">&copy; 2025 Modern Fact Stories. For educational purposes only. We do not host any files.</p>
         </div>
     </footer>
 

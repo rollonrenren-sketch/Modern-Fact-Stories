@@ -5,17 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Fact Stories - Watch Free Movies & TV Shows Online</title>
     <link rel="icon" href="logo.jpg" type="image/jpeg">
+    
+    <!-- Google Fonts - Premium Movie Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="css/home.css">
     
-    <!-- Popunder Ad (loads on page visit) -->
+    <!-- Popunder Ad -->
     <script type='text/javascript' src='//idolinflectiongentlemen.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js'></script>
 </head>
-<body>
+<body class="light-mode">
     <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-screen">
-        <img src="logo.jpg" alt="Modern Fact Stories" class="loading-logo">
-        <div class="loading-spinner"></div>
-        <p>Loading...</p>
+        <div class="loading-content">
+            <img src="logo.jpg" alt="Modern Fact Stories" class="loading-logo pulse-animation">
+            <h2 class="loading-title fade-in">Modern Fact Stories</h2>
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Loading amazing content...</p>
+        </div>
     </div>
 
     <!-- Header -->
@@ -23,7 +32,7 @@
         <div class="container">
             <div class="nav-wrapper">
                 <a href="/" class="logo-link">
-                    <img src="logo.jpg" alt="MFS" class="logo-img">
+                    <img src="logo.jpg" alt="MFS" class="logo-img round-logo">
                     <h1 class="logo-text">Modern Fact Stories</h1>
                 </a>
                 
@@ -35,6 +44,25 @@
                 </nav>
 
                 <div class="header-actions">
+                    <!-- Theme Toggle -->
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                        <svg class="sun-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="moon-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Search -->
                     <div class="search-container">
                         <input type="text" id="searchInput" placeholder="Search movies..." class="search-input">
                         <button class="search-btn" id="searchBtn">
@@ -52,63 +80,111 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Search Results (hidden by default) -->
-            <section class="section" id="searchSection" style="display:none;">
-                <h2 class="section-title">Search Results</h2>
+            <!-- Search Results -->
+            <section class="section fade-in" id="searchSection" style="display:none;">
+                <h2 class="section-title">🔍 Search Results</h2>
                 <div class="movie-grid" id="searchGrid"></div>
             </section>
 
-            <!-- Trending Section -->
-            <section class="section">
+            <!-- Trending -->
+            <section class="section fade-in">
                 <h2 class="section-title">🔥 Trending Now</h2>
                 <div class="movie-grid" id="trendingGrid">
-                    <div class="loading-placeholder">Loading trending movies...</div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
                 </div>
             </section>
 
             <!-- Ad Banner 1 -->
-            <div class="ad-container">
+            <div class="ad-container slide-up">
                 <script async="async" data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>
                 <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
             </div>
 
             <!-- Popular Movies -->
-            <section class="section">
+            <section class="section fade-in">
                 <h2 class="section-title">⭐ Popular Movies</h2>
                 <div class="movie-grid" id="popularGrid">
-                    <div class="loading-placeholder">Loading popular movies...</div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
                 </div>
             </section>
 
             <!-- Top Rated -->
-            <section class="section">
+            <section class="section fade-in">
                 <h2 class="section-title">🏆 Top Rated</h2>
                 <div class="movie-grid" id="topRatedGrid">
-                    <div class="loading-placeholder">Loading top rated movies...</div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
                 </div>
             </section>
 
             <!-- Ad Banner 2 -->
-            <div class="ad-container">
+            <div class="ad-container slide-up">
                 <script async="async" data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>
                 <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
             </div>
 
-            <!-- Upcoming Movies -->
-            <section class="section">
+            <!-- Upcoming -->
+            <section class="section fade-in">
                 <h2 class="section-title">📅 Coming Soon</h2>
                 <div class="movie-grid" id="upcomingGrid">
-                    <div class="loading-placeholder">Loading upcoming movies...</div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
+                    <div class="skeleton-loader"></div>
                 </div>
             </section>
         </div>
     </main>
 
-    <!-- Footer -->
+    <!-- Footer with DMCA Disclaimer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 Modern Fact Stories. All rights reserved.</p>
-            <p>For educational purposes only. Contact: <a href="mailto:rollonrenren@gmail.com">rollonrenren@gmail.com</a></p>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Modern Fact Stories</h3>
+                    <p>Your destination for movies and entertainment.</p>
+                    <p>Contact: <a href="mailto:rollonrenren@gmail.com">rollonrenren@gmail.com</a></p>
+                </div>
+                
+                <div class="footer-section disclaimer-section">
+                    <h4>⚠️ Legal Disclaimer</h4>
+                    <p class="disclaimer-text">
+                        <strong>DMCA Notice:</strong> Modern Fact Stories does not host, upload, or store any video files on our servers. 
+                        All content is embedded from third-party sources. We have no control over the nature, content, 
+                        and availability of those sites. All trademarks, videos, logos and brand names are property of their respective owners.
+                    </p>
+                    <p class="disclaimer-text">
+                        <strong>Copyright:</strong> If you believe that your copyrighted work has been copied in a way that 
+                        constitutes copyright infringement and is accessible via this site, please contact us at 
+                        <a href="mailto:rollonrenren@gmail.com">rollonrenren@gmail.com</a> and we will remove the content immediately.
+                    </p>
+                    <p class="disclaimer-text">
+                        <strong>For Educational Purposes Only:</strong> This site is created for educational and informational purposes. 
+                        All content is provided "AS IS" and we make no warranties regarding accuracy or availability.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Modern Fact Stories. All rights reserved.</p>
+                <p>We do not host any files. All content is embedded from external third-party sources.</p>
+            </div>
         </div>
     </footer>
 

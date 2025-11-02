@@ -3,44 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreeFlix - Your Free Cinema</title>
+    <title>Modern Fact Stories - Watch Free Movies & TV Shows Online</title>
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
     <link rel="stylesheet" href="css/home.css">
+    
+    <!-- Popunder Ad (loads on page visit) -->
+    <script type='text/javascript' src='//idolinflectiongentlemen.com/dd/ab/32/ddab327f0fbb76e82d98d4e508c16a85.js'></script>
 </head>
 <body>
-    <header>
-        <div class="logo"><span class="free">FREE</span> <span class="flix">FLIX</span></div>
-        <nav>
-            <a href="#">Home</a>
-            <a href="#">Movies</a>
-            <a href="#">TV Shows</a>
-            <a href="#">Anime</a>
-            <button class="watch-btn">Start Watching</button>
-        </nav>
-        <div class="searchbar">
-            <input type="text" placeholder="Search movies..." />
-            <button><span>&#128270;</span></button>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <img src="logo.jpg" alt="Modern Fact Stories" class="loading-logo">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-wrapper">
+                <a href="/" class="logo-link">
+                    <img src="logo.jpg" alt="MFS" class="logo-img">
+                    <h1 class="logo-text">Modern Fact Stories</h1>
+                </a>
+                
+                <nav class="nav-menu">
+                    <a href="/" class="nav-link active">All</a>
+                    <a href="?category=movie" class="nav-link">Movies</a>
+                    <a href="?category=tv" class="nav-link">TV Shows</a>
+                    <a href="?genre=trending" class="nav-link">Trending</a>
+                </nav>
+
+                <div class="header-actions">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search movies..." class="search-input">
+                        <button class="search-btn" id="searchBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
-    <main>
-        <section class="hero">
-            <h1>Your Free Cinema,<br>Anytime, Anywhere</h1>
-            <p>
-                Tired of dodgy sites asking for your credit card? Say hello to FreeFlix, the chill zone where your privacy and pocket stay untouched. Minimalistic, easy-to-use, and loaded with over 10,000 movies and TV shows.
-            </p>
-            <div class="hero-buttons">
-                <button>View Full Site</button>
-                <button>Learn More</button>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Search Results (hidden by default) -->
+            <section class="section" id="searchSection" style="display:none;">
+                <h2 class="section-title">Search Results</h2>
+                <div class="movie-grid" id="searchGrid"></div>
+            </section>
+
+            <!-- Trending Section -->
+            <section class="section">
+                <h2 class="section-title">🔥 Trending Now</h2>
+                <div class="movie-grid" id="trendingGrid">
+                    <div class="loading-placeholder">Loading trending movies...</div>
+                </div>
+            </section>
+
+            <!-- Ad Banner 1 -->
+            <div class="ad-container">
+                <script async="async" data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>
+                <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
             </div>
-        </section>
-        <section class="featured">
-            <h2>Netflix Originals</h2>
-            <div id="featured-list"></div>
-        </section>
-        <section class="popular">
-            <h2>Popular on Disney+</h2>
-            <div id="popular-list"></div>
-        </section>
+
+            <!-- Popular Movies -->
+            <section class="section">
+                <h2 class="section-title">⭐ Popular Movies</h2>
+                <div class="movie-grid" id="popularGrid">
+                    <div class="loading-placeholder">Loading popular movies...</div>
+                </div>
+            </section>
+
+            <!-- Top Rated -->
+            <section class="section">
+                <h2 class="section-title">🏆 Top Rated</h2>
+                <div class="movie-grid" id="topRatedGrid">
+                    <div class="loading-placeholder">Loading top rated movies...</div>
+                </div>
+            </section>
+
+            <!-- Ad Banner 2 -->
+            <div class="ad-container">
+                <script async="async" data-cfasync="false" src="//idolinflectiongentlemen.com/a4bf814c4146624bf8b42bd02f5c6d3c/invoke.js"></script>
+                <div id="container-a4bf814c4146624bf8b42bd02f5c6d3c"></div>
+            </div>
+
+            <!-- Upcoming Movies -->
+            <section class="section">
+                <h2 class="section-title">📅 Coming Soon</h2>
+                <div class="movie-grid" id="upcomingGrid">
+                    <div class="loading-placeholder">Loading upcoming movies...</div>
+                </div>
+            </section>
+        </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Modern Fact Stories. All rights reserved.</p>
+            <p>For educational purposes only. Contact: <a href="mailto:rollonrenren@gmail.com">rollonrenren@gmail.com</a></p>
+        </div>
+    </footer>
+
     <script src="js/home.js"></script>
 </body>
 </html>

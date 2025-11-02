@@ -1,19 +1,25 @@
-// Modern Fact Stories v2.0 - Movie Detail with Multi-Player Support
-// API KEY SECURE - Using Cloudflare Worker
-// Auto-switches between 3 video servers for best playback
+// Modern Fact Stories v3.0 - Movie Detail with Episode Selector
+// Features: Multi-Player, Episode Browser, Theme Toggle, SEO, Cache
 
 const WORKER_URL = 'https://chanfana-openapi-template.gallionmelvs.workers.dev';
 
-// Multiple video streaming APIs (auto-fallback)
+// Multiple video streaming APIs
 const VIDEO_SERVERS = {
     vidsrc: 'https://vidsrc.icu/embed',
     vidsrc2: 'https://vidsrc.to/embed',
     embed: 'https://www.2embed.cc/embed'
 };
 
+// Cache for API responses (5 min)
+const cache = {};
+const CACHE_TIME = 5 * 60 * 1000;
+
 let currentMovieId = null;
 let currentMediaType = null;
 let currentServer = 'vidsrc';
+let currentSeason = 1;
+let currentEpisode = 1;
+let seasonsData = [];
 
 // Theme Toggle
 const themeToggle = document.getElementById('themeToggle');
@@ -81,46 +87,142 @@ function loadVideoPlayer() {
     if (currentMediaType === 'movie') {
         videoPlayer.src = `${serverUrl}/movie/${currentMovieId}`;
     } else {
-        // For TV shows, default to S01E01
-        videoPlayer.src = `${serverUrl}/tv/${currentMovieId}/1/1`;
+        // For TV shows, use current season/episode
+        videoPlayer.src = `${serverUrl}/tv/${currentMovieId}/${currentSeason}/${currentEpisode}`;
     }
 }
 
-// Fetch movie details from TMDB via YOUR SECURE Worker
-async function fetchMovieDetails() {
+// Fetch with caching
+async function fetchWithCache(endpoint) {
+    const cacheKey = endpoint;
+    const cached = cache[cacheKey];
+    
+    if (cached && Date.now() - cached.time < CACHE_TIME) {
+        return cached.data;
+    }
+    
     try {
-        const endpoint = `${currentMediaType}/${movieId}`;
         const response = await fetch(`${WORKER_URL}?path=${endpoint}`);
-        if (!response.ok) throw new Error('Failed to fetch movie details');
-        return await response.json();
+        if (!response.ok) throw new Error('Failed to fetch');
+        const data = await response.json();
+        
+        cache[cacheKey] = { data, time: Date.now() };
+        return data;
     } catch (error) {
-        console.error('Error fetching movie details:', error);
+        console.error('Error:', error);
         return null;
     }
 }
 
+// Fetch movie/TV show details
+async function fetchMovieDetails() {
+    return await fetchWithCache(`${currentMediaType}/${movieId}`);
+}
+
 // Fetch recommendations
 async function fetchRecommendations() {
-    try {
-        const endpoint = `${currentMediaType}/${movieId}/recommendations`;
-        const response = await fetch(`${WORKER_URL}?path=${endpoint}`);
-        if (!response.ok) throw new Error('Failed to fetch recommendations');
-        const data = await response.json();
-        return data.results || [];
-    } catch (error) {
-        console.error('Error fetching recommendations:', error);
-        return [];
+    const data = await fetchWithCache(`${currentMediaType}/${movieId}/recommendations`);
+    return data ? data.results || [] : [];
+}
+
+// Fetch TV show seasons (NEW)
+async function fetchSeasons() {
+    const data = await fetchWithCache(`tv/${currentMovieId}`);
+    return data ? data.seasons || [] : [];
+}
+
+// Fetch season episodes (NEW)
+async function fetchSeasonEpisodes(seasonNumber) {
+    const data = await fetchWithCache(`tv/${currentMovieId}/season/${seasonNumber}`);
+    return data ? data.episodes || [] : [];
+}
+
+// Load seasons into dropdown (NEW)
+async function loadSeasons() {
+    const seasons = await fetchSeasons();
+    seasonsData = seasons.filter(s => s.season_number > 0); // Remove "Specials"
+    
+    const seasonSelect = document.getElementById('seasonSelect');
+    seasonSelect.innerHTML = seasonsData.map(season => 
+        `<option value="${season.season_number}">Season ${season.season_number} (${season.episode_count} episodes)</option>`
+    ).join('');
+    
+    currentSeason = 1;
+    loadEpisodes();
+}
+
+// Load episodes for current season (NEW)
+async function loadEpisodes() {
+    const seasonSelect = document.getElementById('seasonSelect');
+    currentSeason = parseInt(seasonSelect.value);
+    
+    const episodesGrid = document.getElementById('episodesGrid');
+    episodesGrid.innerHTML = '<div class="episodes-loading">Loading episodes...</div>';
+    
+    const episodes = await fetchSeasonEpisodes(currentSeason);
+    
+    if (episodes.length === 0) {
+        episodesGrid.innerHTML = '<div class="episodes-loading">No episodes found</div>';
+        return;
+    }
+    
+    episodesGrid.innerHTML = episodes.map(ep => `
+        <div class="episode-card ${ep.episode_number === currentEpisode ? 'active' : ''}" 
+             onclick="playEpisode(${ep.episode_number})">
+            <div class="episode-number">EP ${ep.episode_number}</div>
+            <div class="episode-name">${ep.name || 'Episode ' + ep.episode_number}</div>
+        </div>
+    `).join('');
+}
+
+// Play selected episode (NEW)
+function playEpisode(episodeNumber) {
+    currentEpisode = episodeNumber;
+    
+    // Update active state
+    document.querySelectorAll('.episode-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+    
+    // Load new episode
+    loadVideoPlayer();
+    
+    // Scroll to player
+    document.getElementById('videoContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Update SEO meta tags (NEW)
+function updateSEO(movie) {
+    const title = movie.title || movie.name;
+    const description = movie.overview || 'Watch this movie for free in HD quality';
+    const poster = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '';
+    
+    document.getElementById('pageTitle').textContent = `${title} - Watch Online Free | Modern Fact Stories`;
+    document.getElementById('pageDescription').setAttribute('content', description.substring(0, 160));
+    document.getElementById('ogTitle').setAttribute('content', title);
+    document.getElementById('ogDescription').setAttribute('content', description.substring(0, 200));
+    if (poster) {
+        document.getElementById('ogImage').setAttribute('content', poster);
     }
 }
 
 // Display movie details
 function displayMovieDetails(movie) {
     const title = movie.title || movie.name;
-    document.getElementById('pageTitle').textContent = `${title} - Modern Fact Stories`;
+    
+    // Update SEO
+    updateSEO(movie);
     
     // Setup video player with default server
     loadVideoPlayer();
     document.getElementById('videoContainer').style.display = 'block';
+    
+    // Show episode selector for TV shows (NEW)
+    if (currentMediaType === 'tv') {
+        document.getElementById('episodeSelector').style.display = 'block';
+        loadSeasons();
+    }
     
     // Movie poster
     const posterPath = movie.poster_path 
@@ -138,6 +240,7 @@ function displayMovieDetails(movie) {
         : 'N/A';
     const runtime = movie.runtime ? `${movie.runtime} min` : '';
     const status = movie.status || '';
+    const seasons = movie.number_of_seasons ? `${movie.number_of_seasons} Seasons` : '';
     
     const metaHTML = `
         <div class="meta-item">
@@ -145,6 +248,7 @@ function displayMovieDetails(movie) {
         </div>
         <div class="meta-item">📅 ${year}</div>
         ${runtime ? `<div class="meta-item">⏱️ ${runtime}</div>` : ''}
+        ${seasons ? `<div class="meta-item">📺 ${seasons}</div>` : ''}
         ${status ? `<div class="meta-item">📊 ${status}</div>` : ''}
     `;
     document.getElementById('movieMeta').innerHTML = metaHTML;
@@ -214,14 +318,16 @@ function shareMovie() {
     
     if (navigator.share) {
         navigator.share({
-            title: title,
-            text: `Check out ${title} on Modern Fact Stories!`,
+            title: `${title} - Modern Fact Stories`,
+            text: `Watch ${title} for free on Modern Fact Stories!`,
             url: url
-        }).catch(err => console.log('Error sharing:', err));
+        }).catch(err => console.log('Share cancelled'));
     } else {
         // Fallback - copy to clipboard
         navigator.clipboard.writeText(url).then(() => {
-            alert('Link copied to clipboard!');
+            alert('✅ Link copied to clipboard!');
+        }).catch(() => {
+            alert('Link: ' + url);
         });
     }
 }
@@ -229,7 +335,7 @@ function shareMovie() {
 // Load movie page
 async function loadMoviePage() {
     if (!movieId) {
-        document.getElementById('loadingState').innerHTML = '<p>Error: No movie ID provided</p>';
+        document.getElementById('loadingState').innerHTML = '<p>❌ Error: No movie ID provided</p>';
         return;
     }
     
@@ -243,7 +349,7 @@ async function loadMoviePage() {
         displayMovieDetails(movieDetails);
         displayRecommendations(recommendations);
     } else {
-        document.getElementById('loadingState').innerHTML = '<p>Error loading movie details</p>';
+        document.getElementById('loadingState').innerHTML = '<p>❌ Error loading movie details</p>';
     }
 }
 
